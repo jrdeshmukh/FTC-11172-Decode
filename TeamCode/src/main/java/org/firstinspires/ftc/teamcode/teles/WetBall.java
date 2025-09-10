@@ -60,6 +60,7 @@ import pedroPathing.constants.LConstants;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.config.GreenFN;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -172,6 +173,8 @@ public class WetBall extends OpMode {
         int red3 = colorSensor3.red();
         int green3 = colorSensor3.green();
         int blue3 = colorSensor3.blue();
+        
+        
         //if (opModeIsActive()) {
         //while (opModeIsActive()) {
             /*lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
