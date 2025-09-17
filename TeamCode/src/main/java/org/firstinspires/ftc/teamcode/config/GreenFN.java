@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.config;
 
+import com.acmerobotics.dashboard.config.Config;
 
 
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
@@ -24,6 +25,7 @@ import java.io.File;
 import java.util.List;
 
 
+@Config
 public class GreenFN {
     public static double shooterCloseRPM = 4000;
     public static double closeHoodAngle = 80;
@@ -31,13 +33,15 @@ public class GreenFN {
     private AprilTagProcessor aprilTag;
 
     PIDController fly1Controller, fly2Controller, intakeController;
-    public static double intakekP, intakekI, intakekD, flykP, flykI, flykD;
+    public static double intakekP = 0.00017, intakekI, intakekD, flykP, flykI, flykD, intakeKF = 0.000285, flyKF = 0.000285;
     public DcMotorEx flywheel1, flywheel2, intake;
     public ColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
     public static double flywheelTarget, intakeTarget;
     //-1 is place holder
     public static int automotif = -1;
+
+    public double intakePower, flywheel1Power, flywheel2Power;
 
     public enum Motifs {
         GPP,
@@ -49,13 +53,13 @@ public class GreenFN {
 
 
     public GreenFN(HardwareMap map) {
-//        flywheel1 = map.get(DcMotorEx.class, "flywheel1");
-//        flywheel2 = map.get(DcMotorEx.class, "flywheel2");
-//        intake = map.get(DcMotorEx.class, "intake");
-//        flywheel2.setDirection(DcMotorSimple.Direction.REVERSE);
-//        fly1Controller = new PIDController(flykP, flykI, flykD);
-//        fly2Controller = new PIDController(flykP, flykI, flykD);
-//        intakeController = new PIDController(intakekP, intakekI, intakekD);
+        flywheel1 = map.get(DcMotorEx.class, "flywheel1");
+        flywheel2 = map.get(DcMotorEx.class, "flywheel2");
+        intake = map.get(DcMotorEx.class, "intake");
+        flywheel2.setDirection(DcMotorSimple.Direction.REVERSE);
+        fly1Controller = new PIDController(flykP, flykI, flykD);
+        fly2Controller = new PIDController(flykP, flykI, flykD);
+        intakeController = new PIDController(intakekP, intakekI, intakekD);
 //        colorSensor1 = map.get(ColorSensor.class, "colorSensor1");
 //        colorSensor2 = map.get(ColorSensor.class, "colorSensor2");
 //        colorSensor3 = map.get(ColorSensor.class, "colorSensor3");
@@ -63,8 +67,8 @@ public class GreenFN {
 //        lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
         // Create the AprilTag processor the easy way.
         aprilTag = AprilTagProcessor.easyCreateWithDefaults();
-        visionPortal = VisionPortal.easyCreateWithDefaults(
-                map.get(WebcamName.class, "Webcam 1"), aprilTag);
+//        visionPortal = VisionPortal.easyCreateWithDefaults(
+//                map.get(WebcamName.class, "Webcam 1"), aprilTag);
     }
 
     /**
@@ -72,10 +76,12 @@ public class GreenFN {
      */
 
     public void update() {
+        updatePIDs();
+        //updateLights();
         //updatePIDs();
         //updateLights();
         if(currentMotif == null){
-            updateAprilTagDetection();
+//            updateAprilTagDetection();
         }
 //        else{
 //            File file = AppUtil.getInstance().getSettingsFile("motif.txt");
@@ -118,14 +124,16 @@ public class GreenFN {
 //    }
 
     public void updatePIDs() {
-        double fly1power = fly1Controller.calculate(flywheel1.getVelocity(AngleUnit.DEGREES), flywheelTarget);
-        double fly2power = fly2Controller.calculate(flywheel2.getVelocity(AngleUnit.DEGREES), flywheelTarget);
+        flywheel1Power = fly1Controller.calculate(flywheel1.getVelocity(AngleUnit.DEGREES), flywheelTarget) + flywheel1.getVelocity()*flyKF;
+        flywheel2Power = fly2Controller.calculate(flywheel2.getVelocity(AngleUnit.DEGREES), flywheelTarget) + flywheel2.getVelocity()*flyKF;
 
-        double intakepower = intakeController.calculate(intake.getVelocity(AngleUnit.DEGREES), intakeTarget);
+        intakePower = intakeController.calculate(intake.getVelocity(AngleUnit.DEGREES), intakeTarget) + intake.getVelocity()*intakeKF;
 
-        flywheel1.setPower(fly1power);
-        flywheel2.setPower(fly2power);
-        intake.setPower(intakepower);
+        flywheel1.setPower(flywheel1Power);
+        flywheel2.setPower(flywheel2Power);
+        intake.setPower(intakePower);
+
+        intakeController.setPID(intakekP, intakekI, intakekD);
     }
 
     //update lights based on color sensor
