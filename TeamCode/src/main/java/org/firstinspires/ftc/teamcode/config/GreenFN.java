@@ -36,6 +36,8 @@ public class GreenFN {
     public ColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
     public static double flywheelTarget, intakeTarget;
+    //-1 is place holder
+    public static int automotif = -1;
 
     public enum Motifs {
         GPP,
@@ -75,45 +77,45 @@ public class GreenFN {
         if(currentMotif == null){
             updateAprilTagDetection();
         }
-        else{
-            File file = AppUtil.getInstance().getSettingsFile("motif.txt");
-            switch(currentMotif) {
-                case GPP:
-                    ReadWriteFile.writeFile(file, "GPP");
-                    break;
-                case PGP:
-                    ReadWriteFile.writeFile(file, "PGP");
-                    break;
-                case PPG:
-                    ReadWriteFile.writeFile(file, "PPG");
-                    break;
-            }
-            visionPortal.close();
-        }
+//        else{
+//            File file = AppUtil.getInstance().getSettingsFile("motif.txt");
+//            switch(currentMotif) {
+//                case GPP:
+//                    ReadWriteFile.writeFile(file, "GPP");
+//                    break;
+//                case PGP:
+//                    ReadWriteFile.writeFile(file, "PGP");
+//                    break;
+//                case PPG:
+//                    ReadWriteFile.writeFile(file, "PPG");
+//                    break;
+//            }
+//            visionPortal.close();
+//        }
     }
 
-    public void parseMotif() {
-        File file = AppUtil.getInstance().getSettingsFile("motif.txt");
-        String input = ReadWriteFile.readFile(file).trim();
-        ReadWriteFile.writeFile(file, "null");
-        switch (input) {
-            case "GPP":
-                currentMotif = Motifs.GPP;
-                break;
-            case "PGP":
-                currentMotif = Motifs.PGP;
-                break;
-            case "PPG":
-                currentMotif = Motifs.PPG;
-                break;
-            case "null":
-                currentMotif = null;
-                break;
-            case "nul":
-                currentMotif = null;
-                break;
-        }
-    }
+//    public void parseMotif() {
+//        File file = AppUtil.getInstance().getSettingsFile("motif.txt");
+//        String input = ReadWriteFile.readFile(file).trim();
+//        ReadWriteFile.writeFile(file, "null");
+//        switch (input) {
+//            case "GPP":
+//                currentMotif = Motifs.GPP;
+//                break;
+//            case "PGP":
+//                currentMotif = Motifs.PGP;
+//                break;
+//            case "PPG":
+//                currentMotif = Motifs.PPG;
+//                break;
+//            case "null":
+//                currentMotif = null;
+//                break;
+//            case "nul":
+//                currentMotif = null;
+//                break;
+//        }
+//    }
 
     public void updatePIDs() {
         double fly1power = fly1Controller.calculate(flywheel1.getVelocity(AngleUnit.DEGREES), flywheelTarget);
@@ -179,7 +181,6 @@ public class GreenFN {
         }
   // end for() loop
     }
-
 
 
 

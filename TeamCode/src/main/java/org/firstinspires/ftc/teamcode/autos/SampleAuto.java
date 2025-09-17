@@ -20,6 +20,7 @@ public class SampleAuto extends OpMode {
     public void init() {
 
         g = new GreenFN(hardwareMap);
+        currentMotif = null;
 
     }
     @Override

@@ -18,7 +18,7 @@ public class SampleTele extends OpMode {
     public void init() {
 
         g = new GreenFN(hardwareMap);
-        g.parseMotif();
+        //g.parseMotif();
     }
 
     @Override
@@ -27,4 +27,5 @@ public class SampleTele extends OpMode {
         telemetry.addData("Current motif:", currentMotif);
         telemetry.update();
     }
+
 }
