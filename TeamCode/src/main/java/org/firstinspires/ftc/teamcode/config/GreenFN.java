@@ -1,28 +1,34 @@
 package org.firstinspires.ftc.teamcode.config;
 
+import androidx.annotation.NonNull;
+
 import com.acmerobotics.dashboard.config.Config;
 
 
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.InstantAction;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathChain;
+import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.robotcore.util.ReadWriteFile;
+import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
+import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+
 
 
 @Config
@@ -32,16 +38,28 @@ public class GreenFN {
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
-    PIDController fly1Controller, fly2Controller, intakeController;
-    public static double intakekP = 0.00017, intakekI, intakekD, flykP, flykI, flykD, intakeKF = 0.000285, flyKF = 0.000285;
-    public DcMotorEx flywheel1, flywheel2, intake;
+    PIDController shooterController1, shooterController2, intakeController;
+    public static double intakekP = 0.00017, intakekI, intakekD, shooterkP, shooterkI, shooterkD, intakeKF = 0.000285, shooterkF = 0.000285;
+    public DcMotorEx shooter1, shooter2, intake;
     public ColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
-    public static double flywheelTarget, intakeTarget;
-    //-1 is place holder
+    public static double shooterTarget, intakeTarget;
+
+    public Servo stopper1, stopper2, stopper3;
+    public Follower follower;
+
+    public double minTimeBtwnShots = 0.2;
+
+
     public static int automotif = -1;
 
-    public double intakePower, flywheel1Power, flywheel2Power;
+    public static double intakePower, flywheel1Power, flywheel2Power;
+
+
+    public static double stopperIntake, stopperLoad, stopperShoot;
+
+    public ArrayList<Servo> shooterQueue = new ArrayList<>();
+    public int shooterRPMTolerance = 100;
 
     public enum Motifs {
         GPP,
@@ -51,15 +69,99 @@ public class GreenFN {
 
     public static Motifs currentMotif = null;
 
+    public Timer shotTimer;
+    public double recentShotTime = 0;
+
+
+    public class WaitToDone implements Action {
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            return follower.isBusy();
+        }
+    }
+
+    public Action follow(PathChain a) {
+        return new InstantAction(() -> {
+            if (!follower.isBusy()) {
+                follower.followPath(a, true);
+            }
+        });
+    }
+
+    public Action followUntilDone(Path a) {
+        return new FollowUntilDone(a);
+    }
+
+    public Action followUntilDone(Path a, boolean holdEnd) {
+        return new FollowUntilDone(a, holdEnd);
+    }
+
+    public Action followUntilDoneChain(PathChain a) {
+        return new FollowUntilDoneChain(a);
+    }
+
+    public Action followPathJustPath(Path a) {
+        return new InstantAction(() -> follower.followPath(a));
+    }
+
+    public class FollowUntilDone implements Action {
+
+        Path a;
+        boolean called = false;
+        boolean holdEnd = true;
+
+        public FollowUntilDone(Path a)  {
+            this.a = a;
+        }
+        public FollowUntilDone(Path a, boolean holdEnd)  {
+            this.a = a;
+            this.holdEnd = holdEnd;
+        }
+
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            if(!called) {
+                follower.followPath(a, holdEnd);
+                called = true;
+            }
+            return follower.isBusy();
+        }
+    }
+
+    public class FollowUntilDoneChain implements Action {
+
+        PathChain a;
+        boolean called = false;
+
+        public FollowUntilDoneChain(PathChain a)  {
+            this.a = a;
+        }
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            if(!called) {
+                follower.followPath(a);
+                called = true;
+            }
+            return follower.isBusy();
+        }
+    }
 
     public GreenFN(HardwareMap map) {
-        flywheel1 = map.get(DcMotorEx.class, "flywheel1");
-        flywheel2 = map.get(DcMotorEx.class, "flywheel2");
+        shooter1 = map.get(DcMotorEx.class, "shooter1");
+        shooter2 = map.get(DcMotorEx.class, "shooter2");
         intake = map.get(DcMotorEx.class, "intake");
-        flywheel2.setDirection(DcMotorSimple.Direction.REVERSE);
-        fly1Controller = new PIDController(flykP, flykI, flykD);
-        fly2Controller = new PIDController(flykP, flykI, flykD);
+        shooterController1 = new PIDController(shooterkP, shooterkI, shooterkD);
+        shooterController2 = new PIDController(shooterkP, shooterkI, shooterkD);
         intakeController = new PIDController(intakekP, intakekI, intakekD);
+        stopper1 = map.servo.get("stopper1");
+        stopper2 = map.servo.get("stopper2");
+        stopper3 = map.servo.get("stopper3");
+
+        shotTimer = new Timer();
+
 //        colorSensor1 = map.get(ColorSensor.class, "colorSensor1");
 //        colorSensor2 = map.get(ColorSensor.class, "colorSensor2");
 //        colorSensor3 = map.get(ColorSensor.class, "colorSensor3");
@@ -67,8 +169,11 @@ public class GreenFN {
 //        lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
         // Create the AprilTag processor the easy way.
         aprilTag = AprilTagProcessor.easyCreateWithDefaults();
+        follower = Constants.createFollower(map);
 //        visionPortal = VisionPortal.easyCreateWithDefaults(
 //                map.get(WebcamName.class, "Webcam 1"), aprilTag);
+
+
     }
 
     /**
@@ -77,66 +182,74 @@ public class GreenFN {
 
     public void update() {
         updatePIDs();
-        //updateLights();
-        //updatePIDs();
-        //updateLights();
-        if(currentMotif == null){
-//            updateAprilTagDetection();
+        follower.update();
+
+
+
+        for(Servo s: shooterQueue) {
+            if(Math.abs(shooter1.getVelocity()/6.0-shooterTarget)<shooterRPMTolerance && shotTimer.getElapsedTimeSeconds()-recentShotTime>minTimeBtwnShots) {
+                s.setPosition(stopperShoot);
+                recentShotTime = shotTimer.getElapsedTimeSeconds();
+            }
         }
-//        else{
-//            File file = AppUtil.getInstance().getSettingsFile("motif.txt");
-//            switch(currentMotif) {
-//                case GPP:
-//                    ReadWriteFile.writeFile(file, "GPP");
-//                    break;
-//                case PGP:
-//                    ReadWriteFile.writeFile(file, "PGP");
-//                    break;
-//                case PPG:
-//                    ReadWriteFile.writeFile(file, "PPG");
-//                    break;
-//            }
-//            visionPortal.close();
-//        }
+
+        if (currentMotif == null) {
+            updateAprilTagDetection();
+        }
     }
 
-//    public void parseMotif() {
-//        File file = AppUtil.getInstance().getSettingsFile("motif.txt");
-//        String input = ReadWriteFile.readFile(file).trim();
-//        ReadWriteFile.writeFile(file, "null");
-//        switch (input) {
-//            case "GPP":
-//                currentMotif = Motifs.GPP;
-//                break;
-//            case "PGP":
-//                currentMotif = Motifs.PGP;
-//                break;
-//            case "PPG":
-//                currentMotif = Motifs.PPG;
-//                break;
-//            case "null":
-//                currentMotif = null;
-//                break;
-//            case "nul":
-//                currentMotif = null;
-//                break;
-//        }
-//    }
+    public void intakeStoppers() {
+        stopper1.setPosition(stopperIntake);
+        stopper2.setPosition(stopperIntake);
+        stopper3.setPosition(stopperIntake);
+    }
+
+    public void loadStoppers() {
+        stopper1.setPosition(stopperLoad);
+        stopper2.setPosition(stopperLoad);
+        stopper3.setPosition(stopperLoad);
+    }
+
+    public void shoot(int shooter) {
+        switch(shooter) {
+            case 1:
+                shooterQueue.add(stopper1);
+                break;
+            case 2:
+                shooterQueue.add(stopper2);
+                break;
+            case 3:
+                shooterQueue.add(stopper3);
+                break;
+            case 4:
+                shooterQueue.add(stopper1);
+                shooterQueue.add(stopper2);
+                shooterQueue.add(stopper3);
+                break;
+        }
+    }
+
+    public void load() {
+        stopper1.setPosition(stopperLoad);
+        stopper2.setPosition(stopperLoad);
+        stopper3.setPosition(stopperLoad);
+    }
 
     public void updatePIDs() {
-        flywheel1Power = fly1Controller.calculate(flywheel1.getVelocity(AngleUnit.DEGREES), flywheelTarget) + flywheel1.getVelocity()*flyKF;
-        flywheel2Power = fly2Controller.calculate(flywheel2.getVelocity(AngleUnit.DEGREES), flywheelTarget) + flywheel2.getVelocity()*flyKF;
+        flywheel1Power = shooterController1.calculate(shooter1.getVelocity(AngleUnit.DEGREES)/6.0, shooterTarget) + shooter1.getVelocity()/6.0* shooterkF;
+        flywheel2Power = shooterController2.calculate(shooter2.getVelocity(AngleUnit.DEGREES)/6.0, shooterTarget) + shooter2.getVelocity()/6.0* shooterkF;
 
-        intakePower = intakeController.calculate(intake.getVelocity(AngleUnit.DEGREES), intakeTarget) + intake.getVelocity()*intakeKF;
+        intakePower = intakeController.calculate(intake.getVelocity(AngleUnit.DEGREES)/6.0, intakeTarget) + intake.getVelocity()/6.0*intakeKF;
 
-        flywheel1.setPower(flywheel1Power);
-        flywheel2.setPower(flywheel2Power);
+        shooter1.setPower(flywheel1Power);
+        shooter2.setPower(flywheel1Power);
         intake.setPower(intakePower);
 
         intakeController.setPID(intakekP, intakekI, intakekD);
+        shooterController1.setPID(shooterkP, shooterkI, shooterkD);
+        shooterController1.setPID(shooterkP, shooterkI, shooterkD);
     }
 
-    //update lights based on color sensor
     public void updateLights() {
         int red1 = colorSensor1.red();
         int green1 = colorSensor1.green();
@@ -167,8 +280,6 @@ public class GreenFN {
         }
     }
 
-
-    //set currentApriltag based on detected apriltag's id, also stop detecting when you see a motif
     public void updateAprilTagDetection() {
 
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
@@ -187,9 +298,20 @@ public class GreenFN {
                     break;
             }
         }
-  // end for() loop
     }
 
+    public Action updateAction() {
+        return new InstantAction(this::update);
+    }
+
+    public Action setIntakeRPM(int rpm) {
+        return new InstantAction(() -> {intakeTarget=rpm;});
+    }
+
+    public Action setShooterRPM(int rpm) { return new InstantAction(() -> shooterTarget =rpm); }
+
+    public Action shootAction(int shooter) {return new InstantAction(() -> shoot(shooter));}
+    public Action loadAction() {return new InstantAction(this::load);}
 
 
 }
