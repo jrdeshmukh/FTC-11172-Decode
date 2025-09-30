@@ -7,7 +7,7 @@ import org.firstinspires.ftc.teamcode.config.FirstBoolean;
 public class BBG extends Gamepad {
     Gamepad gamepad;
 
-    FirstBoolean dpad_up, dpad_down, dpad_left, dpad_right, a, b, x, y, left_bumper, right_bumper, pss;
+    FirstBoolean dpad_up, dpad_down, dpad_left, dpad_right, a, b, x, y, left_bumper, right_bumper, pss, ltrig, rtrig;
     public BBG(Gamepad gamepad) {
         this.gamepad = gamepad;
         dpad_up = new FirstBoolean();
@@ -21,6 +21,8 @@ public class BBG extends Gamepad {
         left_bumper = new FirstBoolean();
         right_bumper = new FirstBoolean();
         pss = new FirstBoolean();
+        ltrig = new FirstBoolean();
+        rtrig = new FirstBoolean();
     }
     public boolean dpad_up() {return dpad_up.betterboolean(gamepad.dpad_up);}
     public boolean dpad_down() {return dpad_down.betterboolean(gamepad.dpad_down);}
@@ -33,5 +35,7 @@ public class BBG extends Gamepad {
     public boolean left_bumper(){return left_bumper.betterboolean(gamepad.left_bumper);}
     public boolean right_bumper() {return right_bumper.betterboolean(gamepad.right_bumper);}
     public boolean ps() {return pss.betterboolean(gamepad.ps);}
+    public boolean left_trigger() {return ltrig.betterboolean(gamepad.left_trigger>0.05);}
+    public boolean right_trigger() {return rtrig.betterboolean(gamepad.right_trigger>0.05);}
 }
 

@@ -9,6 +9,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
@@ -33,22 +34,24 @@ import java.util.List;
 
 @Config
 public class GreenFN {
-    public static double shooterCloseRPM = 4000;
+    public static double shooterCloseRPM = 880;
+    public static double intakeRPM = 300;
     public static double closeHoodAngle = 80;
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.00017, intakekI, intakekD, shooterkP, shooterkI, shooterkD, intakeKF = 0.000285, shooterkF = 0.000285;
+    public static double intakekP = 0.01, intakekI=0, intakekD=0.00, shooterkP=0.01, shooterkI=0.1, shooterkD=0.0001, intakeKF = 0.000285, shooterkF = 0.0002;
     public DcMotorEx shooter1, shooter2, intake;
     public ColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
     public static double shooterTarget, intakeTarget;
+    public static double actualShooterCloseRPM = 810;
 
     public Servo stopper1, stopper2, stopper3;
     public Follower follower;
 
-    public double minTimeBtwnShots = 0.2;
+    public double minTimeBtwnShots = 0.4;
 
 
     public static int automotif = -1;
@@ -56,10 +59,12 @@ public class GreenFN {
     public static double intakePower, flywheel1Power, flywheel2Power;
 
 
-    public static double stopperIntake, stopperLoad, stopperShoot;
+    public static double stopperIntake=0.83, stopperLoad=0.61, stopperShoot=0.13;
+    public static double stopper1Load = 0.65, stopper2Load = 0.47, stopper3Load = 0.55;
+    public static double stopper1Intake = 0.82, stopper2Intake = 0.64, stopper3Intake = 0.67;
 
     public ArrayList<Servo> shooterQueue = new ArrayList<>();
-    public int shooterRPMTolerance = 100;
+    public int shooterRPMTolerance = 70;
 
     public enum Motifs {
         GPP,
@@ -161,6 +166,7 @@ public class GreenFN {
         stopper3 = map.servo.get("stopper3");
 
         shotTimer = new Timer();
+        recentShotTime = shotTimer.getElapsedTimeSeconds();
 
 //        colorSensor1 = map.get(ColorSensor.class, "colorSensor1");
 //        colorSensor2 = map.get(ColorSensor.class, "colorSensor2");
@@ -170,6 +176,8 @@ public class GreenFN {
         // Create the AprilTag processor the easy way.
         aprilTag = AprilTagProcessor.easyCreateWithDefaults();
         follower = Constants.createFollower(map);
+        follower.setStartingPose(new Pose(0,0,0));
+        follower.setPose(new Pose(0,0,0));
 //        visionPortal = VisionPortal.easyCreateWithDefaults(
 //                map.get(WebcamName.class, "Webcam 1"), aprilTag);
 
@@ -187,8 +195,9 @@ public class GreenFN {
 
 
         for(Servo s: shooterQueue) {
-            if(Math.abs(shooter1.getVelocity()/6.0-shooterTarget)<shooterRPMTolerance && shotTimer.getElapsedTimeSeconds()-recentShotTime>minTimeBtwnShots) {
+            if(shotTimer.getElapsedTimeSeconds()-recentShotTime>minTimeBtwnShots) {
                 s.setPosition(stopperShoot);
+                shooterQueue.remove(s);
                 recentShotTime = shotTimer.getElapsedTimeSeconds();
             }
         }
@@ -199,47 +208,54 @@ public class GreenFN {
     }
 
     public void intakeStoppers() {
-        stopper1.setPosition(stopperIntake);
-        stopper2.setPosition(stopperIntake);
-        stopper3.setPosition(stopperIntake);
+        stopper1.setPosition(stopper1Intake);
+        stopper2.setPosition(stopper2Intake);
+        stopper3.setPosition(stopper3Intake);
     }
 
     public void loadStoppers() {
-        stopper1.setPosition(stopperLoad);
-        stopper2.setPosition(stopperLoad);
-        stopper3.setPosition(stopperLoad);
+        stopper1.setPosition(stopper1Load);
+        stopper2.setPosition(stopper2Load);
+        stopper3.setPosition(stopper3Load);
     }
 
     public void shoot(int shooter) {
         switch(shooter) {
             case 1:
                 shooterQueue.add(stopper1);
+//                stopper1.setPosition(stopperShoot);
                 break;
             case 2:
                 shooterQueue.add(stopper2);
+//                stopper2.setPosition(stopperShoot);
                 break;
             case 3:
                 shooterQueue.add(stopper3);
+//                stopper3.setPosition(stopperShoot);
                 break;
             case 4:
                 shooterQueue.add(stopper1);
                 shooterQueue.add(stopper2);
                 shooterQueue.add(stopper3);
+//                stopper1.setPosition(stopperShoot);
+//                stopper2.setPosition(stopperShoot);
+//                stopper3.setPosition(stopperShoot);
+
                 break;
         }
     }
 
     public void load() {
-        stopper1.setPosition(stopperLoad);
-        stopper2.setPosition(stopperLoad);
-        stopper3.setPosition(stopperLoad);
+        stopper1.setPosition(stopper1Load);
+        stopper2.setPosition(stopper2Load);
+        stopper3.setPosition(stopper3Load);
     }
 
     public void updatePIDs() {
-        flywheel1Power = shooterController1.calculate(shooter1.getVelocity(AngleUnit.DEGREES)/6.0, shooterTarget) + shooter1.getVelocity()/6.0* shooterkF;
-        flywheel2Power = shooterController2.calculate(shooter2.getVelocity(AngleUnit.DEGREES)/6.0, shooterTarget) + shooter2.getVelocity()/6.0* shooterkF;
+        flywheel1Power = shooterController1.calculate(shooter1.getVelocity(AngleUnit.DEGREES), shooterTarget) + shooter1.getVelocity(AngleUnit.DEGREES)* shooterkF;
+        flywheel2Power = shooterController2.calculate(shooter2.getVelocity(AngleUnit.DEGREES), shooterTarget) + shooter2.getVelocity(AngleUnit.DEGREES)* shooterkF;
 
-        intakePower = intakeController.calculate(intake.getVelocity(AngleUnit.DEGREES)/6.0, intakeTarget) + intake.getVelocity()/6.0*intakeKF;
+        intakePower = intakeController.calculate(intake.getVelocity(AngleUnit.DEGREES), intakeTarget) + intake.getVelocity(AngleUnit.DEGREES)*intakeKF;
 
         shooter1.setPower(flywheel1Power);
         shooter2.setPower(flywheel1Power);

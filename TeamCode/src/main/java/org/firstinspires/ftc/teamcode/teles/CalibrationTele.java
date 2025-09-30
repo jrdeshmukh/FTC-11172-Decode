@@ -2,11 +2,13 @@ package org.firstinspires.ftc.teamcode.teles;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.config.BBG;
 import org.firstinspires.ftc.teamcode.config.GreenFN;
 
 @Config
+@TeleOp
 public class CalibrationTele extends OpMode {
 
     GreenFN g;
@@ -18,6 +20,7 @@ public class CalibrationTele extends OpMode {
     @Override
     public void init() {
         g = new GreenFN(hardwareMap);
+        g.follower.startTeleopDrive();
         gp1 = new BBG(gamepad1);
         gp2 = new BBG(gamepad2);
 
@@ -56,6 +59,8 @@ public class CalibrationTele extends OpMode {
         }
 
 
+
+        stopperPos = g.stopper1.getPosition();
 
         telemetry.addData("Current Motif: ", GreenFN.currentMotif);
         telemetry.addData("Shooter RPM: ", g.shooter1.getVelocity());
