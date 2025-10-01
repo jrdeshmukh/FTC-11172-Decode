@@ -61,7 +61,7 @@ public class GreenFN {
 
     public static double stopperIntake=0.83, stopperLoad=0.61, stopperShoot=0.13;
     public static double stopper1Load = 0.65, stopper2Load = 0.47, stopper3Load = 0.55;
-    public static double stopper1Intake = 0.82, stopper2Intake = 0.64, stopper3Intake = 0.67;
+    public static double stopper1Intake = 0.82, stopper2Intake = 0.64, stopper3Intake = 0.74;
 
     public ArrayList<Servo> shooterQueue = new ArrayList<>();
     public int shooterRPMTolerance = 70;
@@ -194,13 +194,16 @@ public class GreenFN {
 
 
 
-        for(Servo s: shooterQueue) {
-            if(shotTimer.getElapsedTimeSeconds()-recentShotTime>minTimeBtwnShots) {
+        List<Servo> toRemove = new ArrayList<>();
+        for (Servo s : shooterQueue) {
+            if (shotTimer.getElapsedTimeSeconds() - recentShotTime > minTimeBtwnShots) {
                 s.setPosition(stopperShoot);
-                shooterQueue.remove(s);
+                toRemove.add(s);
                 recentShotTime = shotTimer.getElapsedTimeSeconds();
             }
         }
+        shooterQueue.removeAll(toRemove);
+
 
         if (currentMotif == null) {
             updateAprilTagDetection();

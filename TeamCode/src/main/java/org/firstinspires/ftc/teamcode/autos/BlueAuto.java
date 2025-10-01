@@ -142,6 +142,100 @@ public class BlueAuto extends LinearOpMode {
         }
     }
 
+    public Action shootInOrder(GreenFN.Motifs motif, int row) {
+        switch(motif) {
+            case GPP:
+                switch(row) {
+                    case 0:
+                        return new InstantAction(() ->
+                        {
+                           g.shoot(2);
+                           g.shoot(1);
+                           g.shoot(3);
+                        });
+                    case 1:
+                        return new InstantAction(() ->
+                        {
+                        g.shoot(1);
+                        g.shoot(2);
+                        g.shoot(3);
+                        });
+                    case 2:
+                        return new InstantAction(() ->
+                        {
+                        g.shoot(2);
+                        g.shoot(1);
+                        g.shoot(3);
+                        });
+                    case 3:
+                        return new InstantAction(() ->
+                        {
+                        g.shoot(3);
+                        g.shoot(2);
+                        g.shoot(1);
+                        });
+                }
+                break;
+            case PGP:
+                switch(row) {
+                    case 0:
+                        return new InstantAction(() -> {
+                            g.shoot(1);
+                            g.shoot(2);
+                            g.shoot(3);
+                        });
+                    case 1:
+                        return new InstantAction(() -> {
+                            g.shoot(2);
+                            g.shoot(1);
+                            g.shoot(3);
+                        });
+                    case 2:
+                        return new InstantAction(() -> {
+                            g.shoot(1);
+                            g.shoot(2);
+                            g.shoot(3);
+                        });
+                    case 3:
+                        return new InstantAction(() -> {
+                            g.shoot(2);
+                            g.shoot(3);
+                            g.shoot(1);
+                        });
+                }
+                break;
+            case PPG:
+                switch(row) {
+                    case 0:
+                        return new InstantAction(() -> {
+                            g.shoot(1);
+                            g.shoot(3);
+                            g.shoot(2);
+                        });
+                    case 1:
+                        return new InstantAction(() -> {
+                            g.shoot(2);
+                            g.shoot(3);
+                            g.shoot(1);
+                        });
+                    case 2:
+                        return new InstantAction(() -> {
+                            g.shoot(1);
+                            g.shoot(3);
+                            g.shoot(2);
+                        });
+                    case 3:
+                        return new InstantAction(() -> {
+                            g.shoot(1);
+                            g.shoot(2);
+                            g.shoot(3);
+                        });
+                }
+                break;
+        }
+        return new InstantAction(()-> g.shoot(4));
+    }
+
     @Override
     public void runOpMode() {
         g = new GreenFN(hardwareMap);
@@ -152,7 +246,7 @@ public class BlueAuto extends LinearOpMode {
 
         PathChain apriltag = builder
                 .addPath(
-                        new BezierLine(new Pose(24.070, 129.657), new Pose(45.585, 119.277))
+                        new BezierLine(new Pose(26.146, 130.412), new Pose(45.585, 119.277))
                 )
                 .setConstantHeadingInterpolation(Math.toRadians(144))
                 .build();
@@ -168,7 +262,7 @@ public class BlueAuto extends LinearOpMode {
                 .addPath(
                         new BezierCurve(
                                 new Pose(60.000, 78.000),
-                                new Pose(41.811, 113.237),
+                                new Pose(49.360, 98.516),
                                 new Pose(23.882, 97.384)
                         )
                 )
@@ -201,8 +295,8 @@ public class BlueAuto extends LinearOpMode {
                 .build();
 
         PathChain park = builder
-                .addPath(new BezierLine(new Pose(60.000, 78.000), new Pose(54.078, 63.413)))
-                .setTangentHeadingInterpolation()
+                .addPath(new BezierLine(new Pose(60.000, 78.000), new Pose(52.191, 70.018)))
+                .setConstantHeadingInterpolation(Math.toRadians(39))
                 .build();
 
         waitForStart();
@@ -211,9 +305,28 @@ public class BlueAuto extends LinearOpMode {
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
+                                g.setIntakeRPM((int) GreenFN.intakeRPM),
+                                g.setShooterRPM((int) GreenFN.shooterCloseRPM),
+                                g.loadAction(),
                                 followUntilDoneChain(apriltag),
                                 new SleepAction(0.5),
-                                followUntilDoneChain(scorePreload)
+                                followUntilDoneChain(scorePreload),
+                                shootInOrder(GreenFN.currentMotif, 0),
+                                new SleepAction(4),
+                                g.loadAction(),
+                                followUntilDoneChain(gotoFirst),
+                                followUntilDoneChain(intakeFirst),
+                                new SleepAction(0.5),
+                                followUntilDoneChain(shootFirst),
+                                shootInOrder(GreenFN.currentMotif, 1),
+                                new SleepAction(4),
+                                g.loadAction(),
+                                followUntilDoneChain(gotoSecond),
+                                followUntilDoneChain(intakeSecond),
+                                new SleepAction(0.5),
+                                followUntilDoneChain(shootSecond),
+                                new SleepAction(4),
+                                followUntilDoneChain(park)
                         )
                 )
         );

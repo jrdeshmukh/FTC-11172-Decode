@@ -48,6 +48,8 @@ public class WetBall extends OpMode {
     @Override
     public void start() {
         g.follower.startTeleopDrive();
+        GreenFN.intakeTarget = GreenFN.intakeRPM;
+        GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
     }
 
     @Override
