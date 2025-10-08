@@ -86,10 +86,10 @@ public class GreenFN {
 
     // 🗺️ Define AprilTag field positions (example values for Centerstage)
     // Tag IDs and their coordinates on the field
-    public static final TagPose TAG_1 = new TagPose(0f, 0f, 0f);
-    public static final TagPose TAG_2 = new TagPose(60f, 36f, 0f);
-    public static final TagPose TAG_3 = new TagPose(120f, 36f, 180f);
-    public static final TagPose TAG_4 = new TagPose(60f, 108f, 0f);
+    public static final TagPose TAG_20 = new TagPose(16.3f, 131f, 45f);
+    public static final TagPose TAG_24 = new TagPose(43f, 40f, 135f);
+    //public static final TagPose TAG_3 = new TagPose(120f, 36f, 180f);
+    //public static final TagPose TAG_4 = new TagPose(60f, 108f, 0f);
     // 🔹 Add or edit these with the real field coordinates for your game
 
     public static class TagPose {
@@ -103,10 +103,8 @@ public class GreenFN {
     // --- Method to get a tag's known field position ---
     public static TagPose getTagFieldPosition(int id) {
         switch (id) {
-            case 1: return TAG_1;
-            case 2: return TAG_2;
-            case 3: return TAG_3;
-            case 4: return TAG_4;
+            case 20: return TAG_20;
+            case 24: return TAG_24;
             default: return null;
         }
     }
