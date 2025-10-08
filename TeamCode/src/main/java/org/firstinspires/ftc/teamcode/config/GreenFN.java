@@ -21,6 +21,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -29,6 +30,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.ArrayList;
 import java.util.List;
+
 
 
 
@@ -76,6 +78,38 @@ public class GreenFN {
 
     public Timer shotTimer;
     public double recentShotTime = 0;
+
+    // 🔧 Camera position offsets relative to robot center (in inches)
+    public static final float CAMERA_X_OFFSET = 3.5f;
+    public static final float CAMERA_Y_OFFSET = 7.0f;
+    public static final float CAMERA_Z_OFFSET = 4.0f;
+
+    // 🗺️ Define AprilTag field positions (example values for Centerstage)
+    // Tag IDs and their coordinates on the field
+    public static final TagPose TAG_1 = new TagPose(0f, 0f, 0f);
+    public static final TagPose TAG_2 = new TagPose(60f, 36f, 0f);
+    public static final TagPose TAG_3 = new TagPose(120f, 36f, 180f);
+    public static final TagPose TAG_4 = new TagPose(60f, 108f, 0f);
+    // 🔹 Add or edit these with the real field coordinates for your game
+
+    public static class TagPose {
+        public float x, y, heading;
+        public TagPose(float x, float y, float heading) {
+            this.x = x;
+            this.y = y;
+            this.heading = heading;
+        }
+    }
+    // --- Method to get a tag's known field position ---
+    public static TagPose getTagFieldPosition(int id) {
+        switch (id) {
+            case 1: return TAG_1;
+            case 2: return TAG_2;
+            case 3: return TAG_3;
+            case 4: return TAG_4;
+            default: return null;
+        }
+    }
 
 
     public class WaitToDone implements Action {
@@ -174,14 +208,15 @@ public class GreenFN {
 //        lights = map.get(RevBlinkinLedDriver.class, "lights");
 //        lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
         // Create the AprilTag processor the easy way.
-        aprilTag = AprilTagProcessor.easyCreateWithDefaults();
         follower = Constants.createFollower(map);
         follower.setStartingPose(new Pose(0,0,0));
         follower.setPose(new Pose(0,0,0));
-//        visionPortal = VisionPortal.easyCreateWithDefaults(
-//                map.get(WebcamName.class, "Webcam 1"), aprilTag);
-
-
+        // Initialize camera (webcam example)
+        aprilTag = AprilTagProcessor.easyCreateWithDefaults();
+        visionPortal = VisionPortal.easyCreateWithDefaults(
+                map.get(WebcamName.class, "Webcam 1"),
+                aprilTag
+        );
     }
 
     /**
@@ -191,6 +226,13 @@ public class GreenFN {
     public void update() {
         updatePIDs();
         follower.update();
+        List<AprilTagDetection> detections = aprilTag.getDetections();
+        if (detections.size() > 0) {
+            AprilTagDetection detection = detections.get(0); // pick the first detected tag
+
+            // Convert to field coordinates
+            float[] robotPos = convertToFieldPosition(detection);
+        }
 
 
 
@@ -269,35 +311,35 @@ public class GreenFN {
         shooterController1.setPID(shooterkP, shooterkI, shooterkD);
     }
 
-    public void updateLights() {
-        int red1 = colorSensor1.red();
-        int green1 = colorSensor1.green();
-        int blue1 = colorSensor1.blue();
-
-        int red2 = colorSensor2.red();
-        int green2 = colorSensor2.green();
-        int blue2 = colorSensor2.blue();
-
-        int red3 = colorSensor3.red();
-        int green3 = colorSensor3.green();
-        int blue3 = colorSensor3.blue();
-
-        if ((red1 > 150 && blue1 > 150 && green1 < 100) && (red2 < 50 && blue2 < 100 && green2 > 175) && (red3 > 150 && blue3 > 150 && green3 < 100)) {
-            // Likely purple green purple
-            lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
-        }
-        else if ((red1 > 150 && blue1 > 150 && green1 < 100) && (red2 > 150 && blue2 > 150 && green2 < 100) &&(green3 > 200 && red3 < 100 && blue3 < 100)) {
-            // Likely purple purple green                        needs to be changed
-            lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_COLOR_GRADIENT);
-        }
-        else if ((red1 < 100 && blue1 < 100 && green1 > 175) && (red2 > 150 && blue2 > 150 && green2 < 100) && (red3 > 150 && blue3 > 150 && green3 < 100)){
-            // Likely green purple purple
-            lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_COLOR_GRADIENT);
-        }
-        else {
-            lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
-        }
-    }
+//    public void updateLights() {
+//        int red1 = colorSensor1.red();
+//        int green1 = colorSensor1.green();
+//        int blue1 = colorSensor1.blue();
+//
+//        int red2 = colorSensor2.red();
+//        int green2 = colorSensor2.green();
+//        int blue2 = colorSensor2.blue();
+//
+//        int red3 = colorSensor3.red();
+//        int green3 = colorSensor3.green();
+//        int blue3 = colorSensor3.blue();
+//
+//        if ((red1 > 150 && blue1 > 150 && green1 < 100) && (red2 < 50 && blue2 < 100 && green2 > 175) && (red3 > 150 && blue3 > 150 && green3 < 100)) {
+//            // Likely purple green purple
+//            lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.VIOLET);
+//        }
+//        else if ((red1 > 150 && blue1 > 150 && green1 < 100) && (red2 > 150 && blue2 > 150 && green2 < 100) &&(green3 > 200 && red3 < 100 && blue3 < 100)) {
+//            // Likely purple purple green                        needs to be changed
+//            lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_COLOR_GRADIENT);
+//        }
+//        else if ((red1 < 100 && blue1 < 100 && green1 > 175) && (red2 > 150 && blue2 > 150 && green2 < 100) && (red3 > 150 && blue3 > 150 && green3 < 100)){
+//            // Likely green purple purple
+//            lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.CP1_2_COLOR_GRADIENT);
+//        }
+//        else {
+//            lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
+//        }
+//    }
 
     public void updateAprilTagDetection() {
 
@@ -331,6 +373,34 @@ public class GreenFN {
 
     public Action shootAction(int shooter) {return new InstantAction(() -> shoot(shooter));}
     public Action loadAction() {return new InstantAction(this::load);}
+    /**
+     * Converts an AprilTag detection into the robot’s absolute field position.
+     * @param detection The AprilTag detection from AprilTagProcessor
+     * @return float[] {robotX, robotY, robotHeading} in field coordinates
+     */
+    public static float[] convertToFieldPosition(AprilTagDetection detection) {
+        if (detection == null) {
+            return new float[]{Float.NaN, Float.NaN, Float.NaN};
+        }
+
+        TagPose tagFieldPosition = getTagFieldPosition(detection.id);
+        if (tagFieldPosition == null) {
+            return new float[]{Float.NaN, Float.NaN, Float.NaN};
+        }
+
+        float tagX   = (float) detection.ftcPose.x;
+        float tagY   = (float) detection.ftcPose.y;
+        float tagYaw = (float) detection.ftcPose.yaw;
+
+        float robotX_fromTag = -tagX - CAMERA_X_OFFSET;
+        float robotY_fromTag = -tagY - CAMERA_Y_OFFSET;
+
+        float robotFieldX = tagFieldPosition.x + robotX_fromTag;
+        float robotFieldY = tagFieldPosition.y + robotY_fromTag;
+        float robotHeading = tagFieldPosition.heading + tagYaw;
+
+        return new float[]{robotFieldX, robotFieldY, robotHeading};
+    }
 
 
 }
