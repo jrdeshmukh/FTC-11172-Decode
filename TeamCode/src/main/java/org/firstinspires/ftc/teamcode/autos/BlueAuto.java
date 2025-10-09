@@ -18,10 +18,13 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathBuilder;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.config.GreenFN;
+
+import java.util.List;
 
 
 @Autonomous()
@@ -34,9 +37,13 @@ public class BlueAuto extends LinearOpMode {
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
             g.update();
-            telemetry.addData("x: ", g.follower.getPose().getX());
-            telemetry.addData("y: ", g.follower.getPose().getY());
-            telemetry.addData("heading: ", Math.toDegrees(g.follower.getPose().getHeading()));
+            telemetry.addData("x: ", g.getPose().getX());
+            telemetry.addData("y: ", g.getPose().getY());
+            telemetry.addData("heading: ", Math.toDegrees(g.getPose().getHeading()));
+            telemetry.addData("recentServoShot: ", g.recentServoShot);
+            telemetry.addData("shooterPower: ", g.flywheel1Power);
+            telemetry.addData("shooterTarget: ", g.shooterTarget);
+
             telemetry.update();
             return true;
         }
@@ -235,69 +242,113 @@ public class BlueAuto extends LinearOpMode {
         }
         return new InstantAction(()-> g.shoot(4));
     }
+    public static Pose startPose = new Pose(25.7, 130.2, Math.toRadians(-36.5));
+    public static double launchPoseX = 59, launchPoseY = 84, launchPoseHeading = Math.toRadians(230);
+    public static Pose launchPose = new Pose(launchPoseX, launchPoseY, launchPoseHeading);
+
+    // Define all poses and headings as variables at the top
+    public static Pose aprilTagPose = new Pose(45.585, 119.277, Math.toRadians(-36.5));
+
+    // Intermediate poses
+    public static Pose gotoFirstCtrl = new Pose(49.360, 98.516);
+    public static Pose firstIntakePose = new Pose(25.00, 100.0);
+    public static Pose firstIntakeEnd = new Pose(22.50, 89.835);
+
+    public static Pose secondGotoPose = new Pose(25.00, 75.773);
+    public static Pose secondIntakePose = new Pose(25.00, 65.489);
+
+    public static Pose thirdGotoPose = new Pose(24.070, 47.937);
+    public static Pose thirdIntakePose = new Pose(24.070, 41.332);
+
+    public static Pose parkPose = new Pose(51.058, 76.058);
 
     @Override
     public void runOpMode() {
         g = new GreenFN(hardwareMap);
-        Pose startPose = new Pose(7.5, 62, Math.toRadians(180));
+        g.loadStoppers();
         g.follower.setStartingPose(startPose);
 
-        PathBuilder builder = new PathBuilder(g.follower);
+        Path aprilTag =
+                new Path(
+                        new BezierLine(startPose, aprilTagPose)
+                );
+        aprilTag.setConstantHeadingInterpolation(aprilTagPose.getHeading());
 
-        PathChain apriltag = builder
-                .addPath(
-                        new BezierLine(new Pose(26.146, 130.412), new Pose(45.585, 119.277))
-                )
-                .setConstantHeadingInterpolation(Math.toRadians(144))
-                .build();
+        Path scorePreload =
+                new Path(
+                        new BezierLine(aprilTagPose, launchPose)
+                );
+        scorePreload.setLinearHeadingInterpolation(aprilTagPose.getHeading(), launchPose.getHeading());
 
-        PathChain scorePreload = builder
-                .addPath(
-                        new BezierLine(new Pose(45.585, 119.277), new Pose(60.000, 78.000))
-                )
-                .setLinearHeadingInterpolation(Math.toRadians(144), Math.toRadians(39))
-                .build();
+        Path gotoFirst =
+                new Path(
+                        new BezierCurve(launchPose, gotoFirstCtrl, firstIntakePose)
+                );
+        gotoFirst.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(0));
 
-        PathChain gotoFirst = builder
-                .addPath(
-                        new BezierCurve(
-                                new Pose(60.000, 78.000),
-                                new Pose(49.360, 98.516),
-                                new Pose(23.882, 97.384)
-                        )
-                )
-                .setLinearHeadingInterpolation(Math.toRadians(39), Math.toRadians(180))
-                .build();
+        Path intakeFirst =
+                new Path(
+                        new BezierLine(firstIntakePose, firstIntakeEnd)
+                );
+        intakeFirst.setConstantHeadingInterpolation(Math.toRadians(0));
 
-        PathChain intakeFirst = builder
-                .addPath(new BezierLine(new Pose(23.882, 97.384), new Pose(24.070, 89.835)))
-                .setConstantHeadingInterpolation(Math.toRadians(180))
-                .build();
+        Path scoreFirst =
+                new Path(
+                        new BezierLine(firstIntakeEnd, launchPose)
+                );
+        scoreFirst.setLinearHeadingInterpolation(Math.toRadians(0), launchPose.getHeading());
 
-        PathChain shootFirst = builder
-                .addPath(new BezierLine(new Pose(24.070, 89.835), new Pose(60.000, 78.000)))
-                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(39))
-                .build();
+        Path gotoSecond =
+                new Path(
+                        new BezierLine(launchPose, secondGotoPose)
+                );
+        gotoSecond.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(0));
 
-        PathChain gotoSecond = builder
-                .addPath(new BezierLine(new Pose(60.000, 78.000), new Pose(24.070, 70.773)))
-                .setLinearHeadingInterpolation(Math.toRadians(39), Math.toRadians(180))
-                .build();
+        Path intakeSecond =
+                new Path(
+                        new BezierLine(secondGotoPose, secondIntakePose)
+                );
+        intakeSecond.setConstantHeadingInterpolation(Math.toRadians(0));
 
-        PathChain intakeSecond = builder
-                .addPath(new BezierLine(new Pose(24.070, 70.773), new Pose(24.070, 65.489)))
-                .setConstantHeadingInterpolation(Math.toRadians(180))
-                .build();
+        Path scoreSecond =
+                new Path(
+                        new BezierLine(secondIntakePose, launchPose)
+                );
+        scoreSecond.setLinearHeadingInterpolation(Math.toRadians(0), launchPose.getHeading());
 
-        PathChain shootSecond = builder
-                .addPath(new BezierLine(new Pose(24.070, 65.489), new Pose(60.000, 78.000)))
-                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(39))
-                .build();
+        Path gotoThird =
+                new Path(
+                        new BezierLine(launchPose, thirdGotoPose)
+                );
+        gotoThird.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(0));
 
-        PathChain park = builder
-                .addPath(new BezierLine(new Pose(60.000, 78.000), new Pose(52.191, 70.018)))
-                .setConstantHeadingInterpolation(Math.toRadians(39))
-                .build();
+        Path intakeThird =
+                new Path(
+                        new BezierLine(thirdGotoPose, thirdIntakePose)
+                );
+        intakeThird.setConstantHeadingInterpolation(Math.toRadians(0));
+
+        Path scoreThird =
+                new Path(
+                        new BezierLine(thirdIntakePose, launchPose)
+                );
+        scoreThird.setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(223));
+
+        Path park =
+                new Path(
+                        new BezierLine(launchPose, parkPose)
+                );
+        park.setTangentHeadingInterpolation();
+
+
+
+
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+
+        for (LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+        g.loadStoppers();
 
         waitForStart();
         if(isStopRequested()) return;
@@ -305,28 +356,47 @@ public class BlueAuto extends LinearOpMode {
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
-                                g.setIntakeRPM((int) GreenFN.intakeRPM),
                                 g.setShooterRPM((int) GreenFN.shooterCloseRPM),
                                 g.loadAction(),
-                                followUntilDoneChain(apriltag),
+                                followUntilDone(aprilTag),
+                                new ParallelAction(
+                                        new SleepAction(0.5),
+                                        g.loadAction(),
+                                        new SequentialAction(
+                                                new SleepAction(0.2),
+                                                g.setIntakeRPM((int) GreenFN.intakeRPM)
+                                        )
+                                ),
+                                g.loadAction(),
+                                followUntilDone(scorePreload),
+                                g.loadAction(),
                                 new SleepAction(0.5),
-                                followUntilDoneChain(scorePreload),
                                 shootInOrder(GreenFN.currentMotif, 0),
-                                new SleepAction(4),
+                                new SleepAction(g.minTimeBtwnShots*3 + 0.4),
                                 g.loadAction(),
-                                followUntilDoneChain(gotoFirst),
-                                followUntilDoneChain(intakeFirst),
+                                followUntilDone(gotoFirst),
+                                followUntilDone(intakeFirst),
                                 new SleepAction(0.5),
-                                followUntilDoneChain(shootFirst),
+                                followUntilDone(scoreFirst),
+                                new SleepAction(0.5),
                                 shootInOrder(GreenFN.currentMotif, 1),
-                                new SleepAction(4),
+                                new SleepAction(g.minTimeBtwnShots*3 + 0.4),
                                 g.loadAction(),
-                                followUntilDoneChain(gotoSecond),
-                                followUntilDoneChain(intakeSecond),
+                                followUntilDone(gotoSecond),
+                                followUntilDone(intakeSecond),
                                 new SleepAction(0.5),
-                                followUntilDoneChain(shootSecond),
-                                new SleepAction(4),
-                                followUntilDoneChain(park)
+                                followUntilDone(scoreSecond),
+                                new SleepAction(0.5),
+                                shootInOrder(GreenFN.currentMotif, 2),
+                                new SleepAction(g.minTimeBtwnShots*3 + 0.4),
+                                g.loadAction(),
+                                followUntilDone(gotoThird),
+                                followUntilDone(intakeThird),
+                                new SleepAction(0.5),
+                                followUntilDone(scoreThird),
+                                new SleepAction(0.5),
+                                shootInOrder(GreenFN.currentMotif, 3),
+                                followUntilDone(park)
                         )
                 )
         );

@@ -29,8 +29,8 @@ public class CalibrationTele extends OpMode {
 
     @Override
     public void loop() {
-        g.update();
-        g.follower.setTeleOpDrive(-gamepad1.left_stick_y, -gamepad1.left_stick_x * 1.27, -gamepad1.right_stick_x * 0.75, true);
+//        g.update();
+//        g.follower.setTeleOpDrive(-gamepad1.left_stick_y, -gamepad1.left_stick_x * 1.27, -gamepad1.right_stick_x * 0.75, true);
 
         if(gp2.left_bumper()) {
             g.stopper1.setPosition(stopperPos+increment);
@@ -44,19 +44,9 @@ public class CalibrationTele extends OpMode {
             g.stopper3.setPosition(stopperPos-increment);
         }
 
-        if(gp2.dpad_up()) {
-            g.intakeTarget += rpmIncrement;
-        }
-        if(gp2.dpad_down()) {
-            g.intakeTarget -= rpmIncrement;
-        }
-
-        if(gp2.y()) {
-            g.shooterTarget += rpmIncrement;
-        }
-        if(gp2.a()) {
-            g.shooterTarget -= rpmIncrement;
-        }
+        g.intake.setPower(gamepad2.left_stick_y);
+        g.shooter1.setPower(gamepad2.right_stick_y);
+        g.shooter2.setPower(gamepad2.right_stick_y);
 
 
 

@@ -13,6 +13,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -37,28 +38,36 @@ import java.util.List;
 @Config
 public class GreenFN {
     public static double shooterCloseRPM = 880;
-    public static double intakeRPM = 300;
+    public static double intakeRPM = 600;
     public static double closeHoodAngle = 80;
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
+
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.01, intakekI=0, intakekD=0.00, shooterkP=0.01, shooterkI=0.1, shooterkD=0.0001, intakeKF = 0.000285, shooterkF = 0.0002;
+    public static double intakekP = 0.002, intakekI=0, intakekD=0.00, shooterkP=0.01, shooterkI=0.1, shooterkD=0.0001, intakeKF = 0.00074, shooterkF = 0.0002;
     public DcMotorEx shooter1, shooter2, intake;
     public ColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
     public static double shooterTarget, intakeTarget;
     public static double actualShooterCloseRPM = 810;
+    public static double shooterFarRPM = 1100;
+
+    public int recentServoShot = 0;
+
 
     public Servo stopper1, stopper2, stopper3;
     public Follower follower;
 
-    public double minTimeBtwnShots = 0.4;
+    public static double minTimeBtwnShots = 0.8;
+
+    public boolean loaded = false, divided = false;
 
 
     public static int automotif = -1;
 
     public static double intakePower, flywheel1Power, flywheel2Power;
+    public Pose currentPose = new Pose(0,0,0);
 
 
     public static double stopperIntake=0.83, stopperLoad=0.61, stopperShoot=0.13;
@@ -68,40 +77,35 @@ public class GreenFN {
     public ArrayList<Servo> shooterQueue = new ArrayList<>();
     public int shooterRPMTolerance = 70;
 
+    FirstBoolean lodded = new FirstBoolean();
+
     public enum Motifs {
         GPP,
         PGP,
         PPG
     }
 
-    public static Motifs currentMotif = null;
+    public static Motifs currentMotif = Motifs.GPP;
 
     public Timer shotTimer;
     public double recentShotTime = 0;
+    public static Pose fromApriltag = new Pose(0,0,0);
 
     // 🔧 Camera position offsets relative to robot center (in inches)
-    public static final float CAMERA_X_OFFSET = 3.5f;
-    public static final float CAMERA_Y_OFFSET = 7.0f;
-    public static final float CAMERA_Z_OFFSET = 4.0f;
+    public static final double CAMERA_X_OFFSET = 3.5f;
+    public static final double CAMERA_Y_OFFSET = 7.0f;
+    public static final double CAMERA_Z_OFFSET = 4.0f;
 
     // 🗺️ Define AprilTag field positions (example values for Centerstage)
     // Tag IDs and their coordinates on the field
-    public static final TagPose TAG_20 = new TagPose(16.3f, 131f, 45f);
-    public static final TagPose TAG_24 = new TagPose(43f, 40f, 135f);
+    public static Pose TAG_20 = new Pose(16.3f, 131f, 45f);
+    public static final Pose TAG_24 = new Pose(43f, 40f, 135f);
     //public static final TagPose TAG_3 = new TagPose(120f, 36f, 180f);
     //public static final TagPose TAG_4 = new TagPose(60f, 108f, 0f);
     // 🔹 Add or edit these with the real field coordinates for your game
-
-    public static class TagPose {
-        public float x, y, heading;
-        public TagPose(float x, float y, float heading) {
-            this.x = x;
-            this.y = y;
-            this.heading = heading;
-        }
-    }
+    
     // --- Method to get a tag's known field position ---
-    public static TagPose getTagFieldPosition(int id) {
+    public static Pose getTagFieldPosition(int id) {
         switch (id) {
             case 20: return TAG_20;
             case 24: return TAG_24;
@@ -187,6 +191,11 @@ public class GreenFN {
     }
 
     public GreenFN(HardwareMap map) {
+        List<LynxModule> allHubs = map.getAll(LynxModule.class);
+
+        for (LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
         shooter1 = map.get(DcMotorEx.class, "shooter1");
         shooter2 = map.get(DcMotorEx.class, "shooter2");
         intake = map.get(DcMotorEx.class, "intake");
@@ -222,44 +231,77 @@ public class GreenFN {
      */
 
     public void update() {
+
         updatePIDs();
+        currentPose = follower.getPose();
         follower.update();
         List<AprilTagDetection> detections = aprilTag.getDetections();
         if (detections.size() > 0) {
             AprilTagDetection detection = detections.get(0); // pick the first detected tag
 
             // Convert to field coordinates
-            float[] robotPos = convertToFieldPosition(detection);
+            if(detection.id == 20 || detection.id == 24) {
+                fromApriltag = convertToFieldPosition(detection);
+            }
         }
 
 
+        stopper1.setPosition(stopper1.getPosition());
+        stopper2.setPosition(stopper2.getPosition());
+        stopper3.setPosition(stopper3.getPosition());
+
+//        loadStoppers();
 
         List<Servo> toRemove = new ArrayList<>();
         for (Servo s : shooterQueue) {
             if (shotTimer.getElapsedTimeSeconds() - recentShotTime > minTimeBtwnShots) {
                 s.setPosition(stopperShoot);
                 toRemove.add(s);
+                if(s==stopper1) {
+                    recentServoShot = 1;
+                }
+                if(s==stopper2) {
+                    recentServoShot = 2;
+                }
+                if(s==stopper3) {
+                    recentServoShot = 3;
+                }
                 recentShotTime = shotTimer.getElapsedTimeSeconds();
             }
         }
         shooterQueue.removeAll(toRemove);
 
 
+//        if (!loaded && !divided) {
+//            shooterTarget/=1.5;
+//            divided = true;
+//        }
+//        if(loaded && divided) {
+//            shooterTarget *= 1.5;
+//            divided = false;
+//        }
+
         if (currentMotif == null) {
             updateAprilTagDetection();
         }
+    }
+
+    public Pose getPose() {
+        return currentPose;
     }
 
     public void intakeStoppers() {
         stopper1.setPosition(stopper1Intake);
         stopper2.setPosition(stopper2Intake);
         stopper3.setPosition(stopper3Intake);
+        loaded = false;
     }
 
     public void loadStoppers() {
         stopper1.setPosition(stopper1Load);
         stopper2.setPosition(stopper2Load);
         stopper3.setPosition(stopper3Load);
+        loaded = true;
     }
 
     public void shoot(int shooter) {
@@ -292,6 +334,7 @@ public class GreenFN {
         stopper1.setPosition(stopper1Load);
         stopper2.setPosition(stopper2Load);
         stopper3.setPosition(stopper3Load);
+        loaded = true;
     }
 
     public void updatePIDs() {
@@ -363,41 +406,42 @@ public class GreenFN {
         return new InstantAction(this::update);
     }
 
-    public Action setIntakeRPM(int rpm) {
+    public Action setIntakeRPM(double rpm) {
         return new InstantAction(() -> {intakeTarget=rpm;});
     }
 
-    public Action setShooterRPM(int rpm) { return new InstantAction(() -> shooterTarget =rpm); }
+    public Action setShooterRPM(double rpm) { return new InstantAction(() -> shooterTarget =rpm); }
 
     public Action shootAction(int shooter) {return new InstantAction(() -> shoot(shooter));}
     public Action loadAction() {return new InstantAction(this::load);}
     /**
      * Converts an AprilTag detection into the robot’s absolute field position.
      * @param detection The AprilTag detection from AprilTagProcessor
-     * @return float[] {robotX, robotY, robotHeading} in field coordinates
+     * @return double[] {robotX, robotY, robotHeading} in field coordinates
      */
-    public static float[] convertToFieldPosition(AprilTagDetection detection) {
+    public static Pose convertToFieldPosition(AprilTagDetection detection) {
         if (detection == null) {
-            return new float[]{Float.NaN, Float.NaN, Float.NaN};
+            return new Pose(0,0,0);
         }
 
-        TagPose tagFieldPosition = getTagFieldPosition(detection.id);
+        Pose tagFieldPosition = getTagFieldPosition(detection.id);
         if (tagFieldPosition == null) {
-            return new float[]{Float.NaN, Float.NaN, Float.NaN};
-        }
+            return new Pose(0,0,0);        }
 
-        float tagX   = (float) detection.ftcPose.x;
-        float tagY   = (float) detection.ftcPose.y;
-        float tagYaw = (float) detection.ftcPose.yaw;
+        double tagX   = (double) detection.ftcPose.x;
+        double tagY   = (double) detection.ftcPose.y;
+        double tagYaw = (double) detection.ftcPose.yaw;
 
-        float robotX_fromTag = -tagX - CAMERA_X_OFFSET;
-        float robotY_fromTag = -tagY - CAMERA_Y_OFFSET;
+        double robotX_fromTag = -tagX - CAMERA_X_OFFSET;
+        double robotY_fromTag = -tagY - CAMERA_Y_OFFSET;
 
-        float robotFieldX = tagFieldPosition.x + robotX_fromTag;
-        float robotFieldY = tagFieldPosition.y + robotY_fromTag;
-        float robotHeading = tagFieldPosition.heading + tagYaw;
+        double robotFieldX = tagFieldPosition.getX() + robotX_fromTag;
+        double robotFieldY = tagFieldPosition.getY() + robotY_fromTag;
+        double robotHeading = tagFieldPosition.getHeading() + tagYaw;
+        
+        fromApriltag = new Pose(robotFieldX, robotFieldY, robotHeading);
 
-        return new float[]{robotFieldX, robotFieldY, robotHeading};
+        return fromApriltag;
     }
 
 
