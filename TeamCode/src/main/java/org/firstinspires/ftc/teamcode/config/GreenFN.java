@@ -95,6 +95,7 @@ public class GreenFN {
     public static final double CAMERA_X_OFFSET = 3.5f;
     public static final double CAMERA_Y_OFFSET = 7.0f;
     public static final double CAMERA_Z_OFFSET = 4.0f;
+    public static final double CAMERA_TILT_DEGREES = 20.0f; // degrees tilted back (affects distance slightly)
 
     // 🗺️ Define AprilTag field positions (example values for Centerstage)
     // Tag IDs and their coordinates on the field
@@ -103,6 +104,8 @@ public class GreenFN {
     //public static final TagPose TAG_3 = new TagPose(120f, 36f, 180f);
     //public static final TagPose TAG_4 = new TagPose(60f, 108f, 0f);
     // 🔹 Add or edit these with the real field coordinates for your game
+
+
     
     // --- Method to get a tag's known field position ---
     public static Pose getTagFieldPosition(int id) {
@@ -431,6 +434,12 @@ public class GreenFN {
         double tagX   = (double) detection.ftcPose.x;
         double tagY   = (double) detection.ftcPose.y;
         double tagYaw = (double) detection.ftcPose.yaw;
+
+
+        // Optional: adjust distance due to tilt (simple correction)
+        double tiltCorrection = (double) Math.cos(Math.toRadians(CAMERA_TILT_DEGREES));
+        tagX *= tiltCorrection;
+        tagY *= tiltCorrection;
 
         double robotX_fromTag = -tagX - CAMERA_X_OFFSET;
         double robotY_fromTag = -tagY - CAMERA_Y_OFFSET;
