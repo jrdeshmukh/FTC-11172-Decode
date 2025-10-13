@@ -43,7 +43,6 @@ public class GreenFN {
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
-
     PIDController shooterController1, shooterController2, intakeController;
     public static double intakekP = 0.0012, intakekI=0, intakekD=0.00, shooterkP=0.01, shooterkI=0.1, shooterkD=0.0001, intakeKF = 0.00085, shooterkF = 0.0002;
     public DcMotorEx shooter1, shooter2, intake;

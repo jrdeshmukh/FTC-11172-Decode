@@ -71,6 +71,7 @@ public class WetBall extends OpMode {
         if(gp2.a()  || gp1.right_trigger()) {g.shoot(4);}
         if(gp2.x()) {g.shoot(3);}
         if(gp2.y()) {g.shoot(2);}
+
         if(gp2.b()) {g.shoot(1);}
 
         if(gp2.left_bumper()) {g.intakeStoppers();}
