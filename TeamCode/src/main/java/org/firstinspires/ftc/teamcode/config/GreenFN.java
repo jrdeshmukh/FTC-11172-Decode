@@ -45,7 +45,7 @@ public class GreenFN {
 
 
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.002, intakekI=0, intakekD=0.00, shooterkP=0.01, shooterkI=0.1, shooterkD=0.0001, intakeKF = 0.00074, shooterkF = 0.0002;
+    public static double intakekP = 0.0012, intakekI=0, intakekD=0.00, shooterkP=0.01, shooterkI=0.1, shooterkD=0.0001, intakeKF = 0.00085, shooterkF = 0.0002;
     public DcMotorEx shooter1, shooter2, intake;
     public ColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
@@ -85,7 +85,7 @@ public class GreenFN {
         PPG
     }
 
-    public static Motifs currentMotif = Motifs.GPP;
+    public static Motifs currentMotif = null;
 
     public Timer shotTimer;
     public double recentShotTime = 0;
@@ -144,6 +144,10 @@ public class GreenFN {
 
     public Action followPathJustPath(Path a) {
         return new InstantAction(() -> follower.followPath(a));
+    }
+
+    public Motifs getCurrentMotif() {
+        return currentMotif;
     }
 
     public class FollowUntilDone implements Action {
@@ -216,14 +220,14 @@ public class GreenFN {
 //        lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
         // Create the AprilTag processor the easy way.
         follower = Constants.createFollower(map);
-        follower.setStartingPose(new Pose(0,0,0));
-        follower.setPose(new Pose(0,0,0));
         // Initialize camera (webcam example)
         aprilTag = AprilTagProcessor.easyCreateWithDefaults();
         visionPortal = VisionPortal.easyCreateWithDefaults(
                 map.get(WebcamName.class, "Webcam 1"),
                 aprilTag
         );
+        visionPortal.resumeStreaming();
+        visionPortal.resumeLiveView();
     }
 
     /**
@@ -235,20 +239,20 @@ public class GreenFN {
         updatePIDs();
         currentPose = follower.getPose();
         follower.update();
-        List<AprilTagDetection> detections = aprilTag.getDetections();
-        if (detections.size() > 0) {
-            AprilTagDetection detection = detections.get(0); // pick the first detected tag
+//        List<AprilTagDetection> detections = aprilTag.getDetections();
+//        if (detections.size() > 0) {
+//            AprilTagDetection detection = detections.get(0); // pick the first detected tag
+//
+//            // Convert to field coordinates
+//            if(detection.id == 20 || detection.id == 24) {
+//                fromApriltag = convertToFieldPosition(detection);
+//            }
+//        }
 
-            // Convert to field coordinates
-            if(detection.id == 20 || detection.id == 24) {
-                fromApriltag = convertToFieldPosition(detection);
-            }
-        }
 
-
-        stopper1.setPosition(stopper1.getPosition());
-        stopper2.setPosition(stopper2.getPosition());
-        stopper3.setPosition(stopper3.getPosition());
+//        stopper1.setPosition(stopper1.getPosition());
+//        stopper2.setPosition(stopper2.getPosition());
+//        stopper3.setPosition(stopper3.getPosition());
 
 //        loadStoppers();
 
@@ -283,6 +287,7 @@ public class GreenFN {
 
         if (currentMotif == null) {
             updateAprilTagDetection();
+
         }
     }
 
@@ -383,7 +388,6 @@ public class GreenFN {
 //    }
 
     public void updateAprilTagDetection() {
-
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
 
         // Step through the list of detections and display info for each one.

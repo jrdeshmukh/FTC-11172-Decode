@@ -43,6 +43,8 @@ public class BlueAuto extends LinearOpMode {
             telemetry.addData("recentServoShot: ", g.recentServoShot);
             telemetry.addData("shooterPower: ", g.flywheel1Power);
             telemetry.addData("shooterTarget: ", g.shooterTarget);
+            telemetry.addData("shooter queue: ", g.shooterQueue.toString());
+            telemetry.addData("motif: ", GreenFN.currentMotif);
 
             telemetry.update();
             return true;
@@ -148,122 +150,131 @@ public class BlueAuto extends LinearOpMode {
             return g.follower.isBusy();
         }
     }
+    public class ShootInOrder implements Action {
 
-    public Action shootInOrder(GreenFN.Motifs motif, int row) {
-        switch(motif) {
-            case GPP:
-                switch(row) {
-                    case 0:
-                        return new InstantAction(() ->
-                        {
-                           g.shoot(2);
-                           g.shoot(1);
-                           g.shoot(3);
-                        });
-                    case 1:
-                        return new InstantAction(() ->
-                        {
-                        g.shoot(1);
-                        g.shoot(2);
-                        g.shoot(3);
-                        });
-                    case 2:
-                        return new InstantAction(() ->
-                        {
-                        g.shoot(2);
-                        g.shoot(1);
-                        g.shoot(3);
-                        });
-                    case 3:
-                        return new InstantAction(() ->
-                        {
-                        g.shoot(3);
-                        g.shoot(2);
-                        g.shoot(1);
-                        });
-                }
-                break;
-            case PGP:
-                switch(row) {
-                    case 0:
-                        return new InstantAction(() -> {
-                            g.shoot(1);
-                            g.shoot(2);
-                            g.shoot(3);
-                        });
-                    case 1:
-                        return new InstantAction(() -> {
-                            g.shoot(2);
-                            g.shoot(1);
-                            g.shoot(3);
-                        });
-                    case 2:
-                        return new InstantAction(() -> {
-                            g.shoot(1);
-                            g.shoot(2);
-                            g.shoot(3);
-                        });
-                    case 3:
-                        return new InstantAction(() -> {
-                            g.shoot(2);
-                            g.shoot(3);
-                            g.shoot(1);
-                        });
-                }
-                break;
-            case PPG:
-                switch(row) {
-                    case 0:
-                        return new InstantAction(() -> {
-                            g.shoot(1);
-                            g.shoot(3);
-                            g.shoot(2);
-                        });
-                    case 1:
-                        return new InstantAction(() -> {
-                            g.shoot(2);
-                            g.shoot(3);
-                            g.shoot(1);
-                        });
-                    case 2:
-                        return new InstantAction(() -> {
-                            g.shoot(1);
-                            g.shoot(3);
-                            g.shoot(2);
-                        });
-                    case 3:
-                        return new InstantAction(() -> {
-                            g.shoot(1);
-                            g.shoot(2);
-                            g.shoot(3);
-                        });
-                }
-                break;
+        int row;
+
+        public ShootInOrder(int row) {
+            this.row = row;
         }
-        return new InstantAction(()-> g.shoot(4));
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            GreenFN.Motifs motif = g.getCurrentMotif();
+            if (motif==null) {
+                motif = GreenFN.currentMotif;
+            }
+            if(motif==null) {
+                motif = GreenFN.Motifs.PGP;
+            }
+            switch(motif) {
+                case GPP:
+                    switch(row) {
+                        case 0:
+                                g.shoot(2);
+                                g.shoot(1);
+                                g.shoot(3);
+                                break;
+                        case 1:
+                                g.shoot(1);
+                                g.shoot(2);
+                                g.shoot(3);
+                            break;
+                        case 2:
+                                g.shoot(2);
+                                g.shoot(1);
+                                g.shoot(3);
+                            break;
+                        case 3:
+                                g.shoot(3);
+                                g.shoot(2);
+                                g.shoot(1);
+                            break;
+                    }
+                    break;
+                case PGP:
+                    switch(row) {
+                        case 0:
+                                g.shoot(1);
+                                g.shoot(2);
+                                g.shoot(3);
+                            break;
+                        case 1:
+                                g.shoot(2);
+                                g.shoot(1);
+                                g.shoot(3);
+                            break;
+                        case 2:
+                                g.shoot(1);
+                                g.shoot(2);
+                                g.shoot(3);
+                            break;
+                        case 3:
+                                g.shoot(2);
+                                g.shoot(3);
+                                g.shoot(1);
+                            break;
+                    }
+                    break;
+                case PPG:
+                    switch(row) {
+                        case 0:
+                                g.shoot(1);
+                                g.shoot(3);
+                                g.shoot(2);
+                            break;
+                        case 1:
+                                g.shoot(2);
+                                g.shoot(3);
+                                g.shoot(1);
+                            break;
+                        case 2:
+                                g.shoot(1);
+                                g.shoot(3);
+                                g.shoot(2);
+                            break;
+                        case 3:
+                                g.shoot(1);
+                                g.shoot(2);
+                                g.shoot(3);
+                            break;
+                    }
+                    break;
+            }
+            return false;
+        }
     }
-    public static Pose startPose = new Pose(25.7, 130.2, Math.toRadians(-36.5));
+    public Action shootInOrder(int row) {
+        return new ShootInOrder(row);
+    }
+    public static Pose startPose = new Pose(15.0, 118.0, Math.toRadians(138));
+
     public static double launchPoseX = 59, launchPoseY = 84, launchPoseHeading = Math.toRadians(230);
     public static Pose launchPose = new Pose(launchPoseX, launchPoseY, launchPoseHeading);
 
     // Define all poses and headings as variables at the top
-    public static Pose aprilTagPose = new Pose(45.585, 119.277, Math.toRadians(-36.5));
+    public static Pose aprilTagPose = new Pose(58.123, 84.872, Math.toRadians(160));
 
     // Intermediate poses
     public static Pose gotoFirstCtrl = new Pose(49.360, 98.516);
-    public static Pose firstIntakePose = new Pose(25.00, 100.0);
-    public static Pose firstIntakeEnd = new Pose(22.50, 89.835);
+    public static Pose firstIntakePose = new Pose(20.00, 100.0);
+    public static Pose firstIntakeEnd = new Pose(20.00, 89.835);
 
-    public static Pose secondGotoPose = new Pose(25.00, 75.773);
-    public static Pose secondIntakePose = new Pose(25.00, 65.489);
+    public static Pose secondGotoPose = new Pose(20.00, 75.773);
+    public static Pose secondIntakePose = new Pose(20.00, 65.489);
 
-    public static Pose thirdGotoPose = new Pose(24.070, 47.937);
-    public static Pose thirdIntakePose = new Pose(24.070, 41.332);
+    public static Pose thirdGotoPose = new Pose(20.00, 47.937);
+    public static Pose thirdIntakePose = new Pose(20.000, 41.332);
 
     public static Pose parkPose = new Pose(51.058, 76.058);
 
     @Override
     public void runOpMode() {
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+
+        for (LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
         g = new GreenFN(hardwareMap);
         g.loadStoppers();
         g.follower.setStartingPose(startPose);
@@ -272,7 +283,7 @@ public class BlueAuto extends LinearOpMode {
                 new Path(
                         new BezierLine(startPose, aprilTagPose)
                 );
-        aprilTag.setConstantHeadingInterpolation(aprilTagPose.getHeading());
+        aprilTag.setLinearHeadingInterpolation(startPose.getHeading(), aprilTagPose.getHeading());
 
         Path scorePreload =
                 new Path(
@@ -343,14 +354,13 @@ public class BlueAuto extends LinearOpMode {
 
 
 
-        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
 
-        for (LynxModule hub : allHubs) {
-            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
-        }
         g.loadStoppers();
 
-        waitForStart();
+
+        while(!isStarted()) {
+            g.update();
+        }
         if(isStopRequested()) return;
         Actions.runBlocking(
                 new ParallelAction(
@@ -358,7 +368,7 @@ public class BlueAuto extends LinearOpMode {
                         new SequentialAction(
                                 g.setShooterRPM((int) GreenFN.shooterCloseRPM),
                                 g.loadAction(),
-                                followUntilDone(aprilTag),
+                                follow(aprilTag),
                                 new ParallelAction(
                                         new SleepAction(0.5),
                                         g.loadAction(),
@@ -368,34 +378,35 @@ public class BlueAuto extends LinearOpMode {
                                         )
                                 ),
                                 g.loadAction(),
+                                new WaitToDone(),
                                 followUntilDone(scorePreload),
                                 g.loadAction(),
-                                new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 0),
-                                new SleepAction(g.minTimeBtwnShots*3 + 0.4),
+//                                new SleepAction(0.5),
+                                shootInOrder( 0),
+                                new SleepAction(GreenFN.minTimeBtwnShots *3),
                                 g.loadAction(),
                                 followUntilDone(gotoFirst),
                                 followUntilDone(intakeFirst),
-                                new SleepAction(0.5),
+                                new SleepAction(0.2),
                                 followUntilDone(scoreFirst),
-                                new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 1),
-                                new SleepAction(g.minTimeBtwnShots*3 + 0.4),
+//                                new SleepAction(0.5),
+                                shootInOrder(1),
+                                new SleepAction(GreenFN.minTimeBtwnShots *3),
                                 g.loadAction(),
                                 followUntilDone(gotoSecond),
                                 followUntilDone(intakeSecond),
-                                new SleepAction(0.5),
+                                new SleepAction(0.2),
                                 followUntilDone(scoreSecond),
-                                new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 2),
-                                new SleepAction(g.minTimeBtwnShots*3 + 0.4),
+//                                new SleepAction(0.5),
+                                shootInOrder(2),
+                                new SleepAction(GreenFN.minTimeBtwnShots *3),
                                 g.loadAction(),
                                 followUntilDone(gotoThird),
                                 followUntilDone(intakeThird),
-                                new SleepAction(0.5),
+                                new SleepAction(0.2),
                                 followUntilDone(scoreThird),
-                                new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 3),
+//                                new SleepAction(0.5),
+                                shootInOrder(3),
                                 followUntilDone(park)
                         )
                 )
