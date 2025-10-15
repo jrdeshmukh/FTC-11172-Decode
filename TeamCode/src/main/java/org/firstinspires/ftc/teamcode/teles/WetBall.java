@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.autos.BlueAuto;
 import org.firstinspires.ftc.teamcode.config.BBG;
 import org.firstinspires.ftc.teamcode.config.GreenFN;
 
@@ -36,7 +37,7 @@ public class WetBall extends OpMode {
     @Override
     public void init() {
         g = new GreenFN(hardwareMap);
-        g.follower.setStartingPose(new Pose(0,0,0));
+        g.follower.setStartingPose(BlueAuto.startPose);
         g.follower.startTeleopDrive();
 
         gp1 = new BBG(gamepad1);
@@ -56,7 +57,7 @@ public class WetBall extends OpMode {
     @Override
     public void loop() {
         g.update();
-        double sprint = 1-Math.abs(gp1.left_trigger) * 0.8;
+        double sprint = 1-(Math.abs(gp1.left_trigger) * 0.8);
 
 
 
@@ -70,6 +71,7 @@ public class WetBall extends OpMode {
         if(gp2.a()  || gp1.right_trigger()) {g.shoot(4);}
         if(gp2.x()) {g.shoot(3);}
         if(gp2.y()) {g.shoot(2);}
+
         if(gp2.b()) {g.shoot(1);}
 
         if(gp2.left_bumper()) {g.intakeStoppers();}
@@ -84,7 +86,7 @@ public class WetBall extends OpMode {
         }
         if(gp2.right_trigger()) {
             if(GreenFN.shooterTarget == GreenFN.shooterCloseRPM) {
-                GreenFN.shooterTarget = 0;
+                GreenFN.shooterTarget = GreenFN.shooterFarRPM;
             }
             else {
                 GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
@@ -94,8 +96,11 @@ public class WetBall extends OpMode {
         if (gp2.dpad_up()) {
             GreenFN.shooterTarget = GreenFN.shooterFarRPM;
         }
-        if (gp2.dpad_up()) {
-            GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
+
+        if (gp2.dpad_down()) {
+            g.stopper1.setPosition(GreenFN.stopperShoot);
+            g.stopper2.setPosition(GreenFN.stopperShoot);
+            g.stopper3.setPosition(GreenFN.stopperShoot);
         }
 
 
