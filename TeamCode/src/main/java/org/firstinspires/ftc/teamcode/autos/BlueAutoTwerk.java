@@ -149,8 +149,6 @@ public class BlueAutoTwerk extends LinearOpMode {
         }
     }
 
-    public static Pose leftShoot = new Pose(0,0, Math.toRadians(180));
-
     public Action shootInOrder(GreenFN.Motifs motif, int row, Path path1, Path path2, Path path3) {
         switch(motif) {
             case GPP:
@@ -161,19 +159,20 @@ public class BlueAutoTwerk extends LinearOpMode {
                             g.shoot(2);
                             followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path2);
-                            g.shoot(3);
                             followUntilDone(path3);
+                            g.shoot(3);
+                            //followUntilDone(path3);
                         });
                     case 1:
                         return new InstantAction(() ->
                         {
-                            g.shoot(1);
                             followUntilDone(path1);
-                            g.shoot(2);
+                            g.shoot(1);
                             followUntilDone(path2);
-                            g.shoot(3);
+                            g.shoot(2);
                             followUntilDone(path3);
+                            g.shoot(3);
+                            //followUntilDone(path3);
                         });
                     case 2:
                         return new InstantAction(() ->
@@ -181,19 +180,20 @@ public class BlueAutoTwerk extends LinearOpMode {
                             g.shoot(2);
                             followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path2);
-                            g.shoot(3);
                             followUntilDone(path3);
+                            g.shoot(3);
+                            //followUntilDone(path3);
                         });
                     case 3:
                         return new InstantAction(() ->
                         {
+                            followUntilDone(path3);
                             g.shoot(3);
-                            followUntilDone(path);
+                            followUntilDone(path2);
                             g.shoot(2);
-                            followUntilDone(path);
+                            followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path);
+                            //followUntilDone(path3);
                         });
                 }
                 break;
@@ -201,39 +201,41 @@ public class BlueAutoTwerk extends LinearOpMode {
                 switch(row) {
                     case 0:
                         return new InstantAction(() -> {
+                            followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path);
+                            followUntilDone(path2);
                             g.shoot(2);
-                            followUntilDone(path);
+                            followUntilDone(path3);
                             g.shoot(3);
-                            followUntilDone(path);
+                            //followUntilDone(path3);
                         });
                     case 1:
                         return new InstantAction(() -> {
                             g.shoot(2);
-                            followUntilDone(path);
+                            followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path);
+                            followUntilDone(path3);
                             g.shoot(3);
-                            followUntilDone(path);
+                            //followUntilDone(path3);
                         });
                     case 2:
                         return new InstantAction(() -> {
+                            followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path);
+                            followUntilDone(path2);
                             g.shoot(2);
-                            followUntilDone(path);
+                            followUntilDone(path3);
                             g.shoot(3);
-                            followUntilDone(path);
+                            //followUntilDone(path3);
                         });
                     case 3:
                         return new InstantAction(() -> {
                             g.shoot(2);
-                            followUntilDone(path);
+                            followUntilDone(path3);
                             g.shoot(3);
-                            followUntilDone(path);
+                            followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path);
+                            //followUntilDone(path2);
                         });
                 }
                 break;
@@ -241,46 +243,52 @@ public class BlueAutoTwerk extends LinearOpMode {
                 switch(row) {
                     case 0:
                         return new InstantAction(() -> {
+                            followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path);
+                            followUntilDone(path3);
                             g.shoot(3);
-                            followUntilDone(path);
+                            followUntilDone(path2);
                             g.shoot(2);
-                            followUntilDone(path);
+                            //followUntilDone(path3);
                         });
                     case 1:
                         return new InstantAction(() -> {
                             g.shoot(2);
-                            followUntilDone(path);
+                            followUntilDone(path3);
                             g.shoot(3);
-                            followUntilDone(path);
+                            followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path);
+                            //followUntilDone(path3);
                         });
                     case 2:
                         return new InstantAction(() -> {
+                            followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path);
+                            followUntilDone(path3);
                             g.shoot(3);
-                            followUntilDone(path);
+                            followUntilDone(path2);
                             g.shoot(2);
-                            followUntilDone(path);
+                            //followUntilDone(path3);
                         });
                     case 3:
                         return new InstantAction(() -> {
+                            followUntilDone(path1);
                             g.shoot(1);
-                            followUntilDone(path);
+                            followUntilDone(path2);
                             g.shoot(2);
-                            followUntilDone(path);
+                            followUntilDone(path3);
                             g.shoot(3);
-                            followUntilDone(path);
+                            //followUntilDone(path3);
                         });
                 }
                 break;
         }
         return new InstantAction(()-> g.shoot(4));
     }
-    public static Pose startPose = new Pose(25.7, 130.2, Math.toRadians(-36.5));
+    public static Pose middleShootPose = new Pose(59,84, Math.toRadians(230));
+    public static Pose rightShootPose = new Pose(56,84, Math.toRadians(227));
+    public static Pose leftShootPose = new Pose(59,89, Math.toRadians(220));
+    public static Pose startPose = new Pose(15, 118, Math.toRadians(138));
     public static double launchPoseX = 59, launchPoseY = 84, launchPoseHeading = Math.toRadians(230);
     public static Pose launchPose = new Pose(launchPoseX, launchPoseY, launchPoseHeading);
 
@@ -306,6 +314,18 @@ public class BlueAutoTwerk extends LinearOpMode {
         g.loadStoppers();
         g.follower.setStartingPose(startPose);
 
+        Path thirdShoot =
+                new Path(
+                        new BezierLine(g.follower.getPose(), leftShootPose)
+                );
+        Path firstShoot =
+                new Path(
+                        new BezierLine(g.follower.getPose(), rightShootPose)
+                );
+        Path secondShoot =
+                new Path(
+                        new BezierLine(g.follower.getPose(), middleShootPose)
+                );
         Path aprilTag =
                 new Path(
                         new BezierLine(startPose, aprilTagPose)
@@ -409,7 +429,7 @@ public class BlueAutoTwerk extends LinearOpMode {
                                 followUntilDone(scorePreload),
                                 g.loadAction(),
                                 new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 0),
+                                shootInOrder(GreenFN.currentMotif, 0, firstShoot, secondShoot, thirdShoot),
                                 new SleepAction(g.minTimeBtwnShots*3 + 0.4),
                                 g.loadAction(),
                                 followUntilDone(gotoFirst),
@@ -417,7 +437,7 @@ public class BlueAutoTwerk extends LinearOpMode {
                                 new SleepAction(0.5),
                                 followUntilDone(scoreFirst),
                                 new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 1),
+                                shootInOrder(GreenFN.currentMotif, 1, firstShoot, secondShoot, thirdShoot),
                                 new SleepAction(g.minTimeBtwnShots*3 + 0.4),
                                 g.loadAction(),
                                 followUntilDone(gotoSecond),
@@ -425,7 +445,7 @@ public class BlueAutoTwerk extends LinearOpMode {
                                 new SleepAction(0.5),
                                 followUntilDone(scoreSecond),
                                 new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 2),
+                                shootInOrder(GreenFN.currentMotif, 2, firstShoot, secondShoot, thirdShoot),
                                 new SleepAction(g.minTimeBtwnShots*3 + 0.4),
                                 g.loadAction(),
                                 followUntilDone(gotoThird),
@@ -433,7 +453,7 @@ public class BlueAutoTwerk extends LinearOpMode {
                                 new SleepAction(0.5),
                                 followUntilDone(scoreThird),
                                 new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 3),
+                                shootInOrder(GreenFN.currentMotif, 3, firstShoot, secondShoot, thirdShoot),
                                 followUntilDone(park)
                         )
                 )
