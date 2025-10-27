@@ -71,6 +71,12 @@ public class GreenFN {
     public Pose currentPose = new Pose(0,0,0);
     public double angvel = 0;
 
+    // --- Heading Lock Variables ---
+    private boolean headingLockEnabled = false;
+    private double lockedHeading = 0;
+    private PIDController headingLockController = new PIDController(0.02, 0, 0.001);
+
+
 
     public static double stopperIntake=0.83, stopperLoad=0.61, stopperShoot=0.13;
     public static double stopper1Load = 0.65, stopper2Load = 0.33; //0.47
@@ -221,6 +227,7 @@ public class GreenFN {
         stopper1 = map.servo.get("stopper1");
         stopper2 = map.servo.get("stopper2");
         stopper3 = map.servo.get("stopper3");
+
 
         shotTimer = new Timer();
         recentShotTime = shotTimer.getElapsedTimeSeconds();
@@ -475,6 +482,58 @@ public class GreenFN {
 
         return fromApriltag;
     }
+    // Call this in TeleOp when you want to toggle the heading lock
+    public void toggleHeadingLock(Pose currentPose) {
+        headingLockEnabled = !headingLockEnabled;
+        if (headingLockEnabled) {
+            lockedHeading = currentPose.getHeading(); // Lock to current angle
+        }
+    }
+
+    // Call this every loop if heading lock is ON
+    public double getHeadingCorrection(Pose currentPose) {
+        if (!headingLockEnabled) return 0;
+
+        double error = lockedHeading - currentPose.getHeading();
+        error = Math.toRadians(AngleUnit.normalizeDegrees(Math.toDegrees(error)));
+        return headingLockController.calculate(0, error);
+    }
+
+    public boolean isHeadingLockEnabled() {
+        return headingLockEnabled;
+    }
+    // --- AUTO-AIM USING APRILTAG ---
+// This method calculates a correction to make the robot face a specific AprilTag (e.g., the goal)
+    // Returns the Pose of the visible goal tag (20 or 24), or null if none
+    public Pose getVisibleGoalPose() {
+        List<AprilTagDetection> detections = aprilTag.getDetections();
+        for (AprilTagDetection det : detections) {
+            if (det.id == 20 || det.id == 24) {
+                return convertToFieldPosition(det);
+            }
+        }
+        return null;
+    }
+
+    // Returns a rotation correction power (radians -> scaled)
+    public double getAutoAimCorrection() {
+        Pose goalPose = getVisibleGoalPose(); // uses either tag 20 or 24
+        if (goalPose == null) return 0; // no tag visible
+
+        double robotHeading = currentPose.getHeading();
+        double targetHeading = Math.atan2(goalPose.getY() - currentPose.getY(),
+                goalPose.getX() - currentPose.getX());
+        double headingError = targetHeading - robotHeading;
+
+        // normalize to [-pi, pi]
+        headingError = Math.atan2(Math.sin(headingError), Math.cos(headingError));
+
+        // scale with a simple proportional controller
+        double kP = 1.0; // tune this
+        return headingError * kP;
+    }
+
+
 
 
 }
