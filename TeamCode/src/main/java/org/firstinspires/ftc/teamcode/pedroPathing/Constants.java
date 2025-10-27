@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.config.FollowerBuilderNew;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
@@ -36,6 +37,7 @@ public class Constants {
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             .xVelocity(84)
             .yVelocity(65)
+            .useBrakeModeInTeleOp(true)
             ;
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
@@ -50,10 +52,11 @@ public class Constants {
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 0.2, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
-        return new FollowerBuilder(followerConstants, hardwareMap)
+        return new FollowerBuilderNew(followerConstants, hardwareMap)
                 .pathConstraints(pathConstraints)
                 .mecanumDrivetrain(driveConstants)
                 .pinpointLocalizer(localizerConstants)
                 .build();
     }
+
 }

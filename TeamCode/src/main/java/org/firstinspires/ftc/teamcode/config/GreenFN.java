@@ -37,41 +37,48 @@ import java.util.List;
 
 @Config
 public class GreenFN {
-    public static double shooterCloseRPM = 880;
+    public static double shooterCloseRPM = 725;
     public static double intakeRPM = 600;
     public static double closeHoodAngle = 80;
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.0012, intakekI=0, intakekD=0.00, shooterkP=0.01, shooterkI=0.1, shooterkD=0.0001, intakeKF = 0.00085, shooterkF = 0.0002;
+    public static double intakekP = 0.002, intakekI=0, intakekD=0.00, shooterkP=0.05, shooterkI=0.1, shooterkD=0.0001, intakeKF = 0.0009, shooterkF = 0.00024;
     public DcMotorEx shooter1, shooter2, intake;
     public ColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
-    public static double shooterTarget, intakeTarget;
+    public static double shooterTarget =0, intakeTarget=0;
     public static double actualShooterCloseRPM = 810;
     public static double shooterFarRPM = 1100;
 
     public int recentServoShot = 0;
 
+    public double s1v=0, s2v=0, iv=0;
+
 
     public Servo stopper1, stopper2, stopper3;
     public Follower follower;
 
-    public static double minTimeBtwnShots = 0.8;
+    public static double minTimeBtwnShots = 0.6;
 
-    public boolean loaded = false, divided = false;
+    public boolean loaded = true, divided = false;
 
 
     public static int automotif = -1;
 
     public static double intakePower, flywheel1Power, flywheel2Power;
     public Pose currentPose = new Pose(0,0,0);
+    public double angvel = 0;
 
 
     public static double stopperIntake=0.83, stopperLoad=0.61, stopperShoot=0.13;
-    public static double stopper1Load = 0.65, stopper2Load = 0.47, stopper3Load = 0.55;
-    public static double stopper1Intake = 0.82, stopper2Intake = 0.64, stopper3Intake = 0.74;
+    public static double stopper1Load = 0.65, stopper2Load = 0.33; //0.47
+    public static double stopper3Load = 0.55;
+    public static double stopper1Intake = 0.85, stopper2Intake = 0.56;// 0.655,
+    public static double stopper3Intake = 0.745;
+
+    public double stop1pos, stop2pos, stop3pos;
 
     public ArrayList<Servo> shooterQueue = new ArrayList<>();
     public int shooterRPMTolerance = 70;
@@ -86,9 +93,12 @@ public class GreenFN {
 
     public static Motifs currentMotif = null;
 
+    public int counter = 0;
+
     public Timer shotTimer;
     public double recentShotTime = 0;
     public static Pose fromApriltag = new Pose(0,0,0);
+    public static double modifiedShooterRPM  = shooterTarget;
 
     // 🔧 Camera position offsets relative to robot center (in inches)
     public static final double CAMERA_X_OFFSET = 3.5f;
@@ -240,7 +250,13 @@ public class GreenFN {
 
         updatePIDs();
         currentPose = follower.getPose();
+        angvel = follower.poseTracker.getAngularVelocity();
+
         follower.update();
+
+        iv = intake.getVelocity(AngleUnit.DEGREES);
+        s1v = shooter1.getVelocity(AngleUnit.DEGREES);
+        s2v = shooter2.getVelocity(AngleUnit.DEGREES);
 //        List<AprilTagDetection> detections = aprilTag.getDetections();
 //        if (detections.size() > 0) {
 //            AprilTagDetection detection = detections.get(0); // pick the first detected tag
@@ -252,10 +268,16 @@ public class GreenFN {
 //        }
 
 
-//        stopper1.setPosition(stopper1.getPosition());
-//        stopper2.setPosition(stopper2.getPosition());
-//        stopper3.setPosition(stopper3.getPosition());
 
+        if(counter%10==0) {
+            stop1pos = stopper1.getPosition();
+            stop2pos = stopper2.getPosition();
+            stop3pos = stopper3.getPosition();
+            stopper1.setPosition(stop1pos);
+            stopper2.setPosition(stop2pos);
+            stopper3.setPosition(stop3pos);
+        }
+        counter++;
 //        loadStoppers();
 
         List<Servo> toRemove = new ArrayList<>();
@@ -278,14 +300,12 @@ public class GreenFN {
         shooterQueue.removeAll(toRemove);
 
 
-//        if (!loaded && !divided) {
-//            shooterTarget/=1.5;
-//            divided = true;
-//        }
-//        if(loaded && divided) {
-//            shooterTarget *= 1.5;
-//            divided = false;
-//        }
+        if (!loaded) {
+            modifiedShooterRPM= shooterTarget/2;
+        }
+        if(loaded) {
+            modifiedShooterRPM = shooterTarget;
+        }
 
         if (currentMotif == null) {
             updateAprilTagDetection();
@@ -345,10 +365,10 @@ public class GreenFN {
     }
 
     public void updatePIDs() {
-        flywheel1Power = shooterController1.calculate(shooter1.getVelocity(AngleUnit.DEGREES), shooterTarget) + shooter1.getVelocity(AngleUnit.DEGREES)* shooterkF;
-        flywheel2Power = shooterController2.calculate(shooter2.getVelocity(AngleUnit.DEGREES), shooterTarget) + shooter2.getVelocity(AngleUnit.DEGREES)* shooterkF;
+        flywheel1Power = shooterController1.calculate(s1v, modifiedShooterRPM) + s1v* shooterkF;
+        flywheel2Power = shooterController2.calculate(s2v, modifiedShooterRPM) + s2v* shooterkF;
 
-        intakePower = intakeController.calculate(intake.getVelocity(AngleUnit.DEGREES), intakeTarget) + intake.getVelocity(AngleUnit.DEGREES)*intakeKF;
+        intakePower = intakeController.calculate(iv, intakeTarget) + iv*intakeKF;
 
         shooter1.setPower(flywheel1Power);
         shooter2.setPower(flywheel1Power);

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.autos;
 
+import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -24,6 +26,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.config.GreenFN;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -149,142 +152,152 @@ public class BlueAutoTwerk extends LinearOpMode {
         }
     }
 
-    public Action shootInOrder(GreenFN.Motifs motif, int row, Path path1, Path path2, Path path3) {
-        switch(motif) {
-            case GPP:
-                switch(row) {
-                    case 0:
-                        return new InstantAction(() ->
-                        {
-                            g.shoot(2);
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            //followUntilDone(path3);
-                        });
-                    case 1:
-                        return new InstantAction(() ->
-                        {
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            followUntilDone(path2);
-                            g.shoot(2);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            //followUntilDone(path3);
-                        });
-                    case 2:
-                        return new InstantAction(() ->
-                        {
-                            g.shoot(2);
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            //followUntilDone(path3);
-                        });
-                    case 3:
-                        return new InstantAction(() ->
-                        {
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            followUntilDone(path2);
-                            g.shoot(2);
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            //followUntilDone(path3);
-                        });
-                }
-                break;
-            case PGP:
-                switch(row) {
-                    case 0:
-                        return new InstantAction(() -> {
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            followUntilDone(path2);
-                            g.shoot(2);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            //followUntilDone(path3);
-                        });
-                    case 1:
-                        return new InstantAction(() -> {
-                            g.shoot(2);
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            //followUntilDone(path3);
-                        });
-                    case 2:
-                        return new InstantAction(() -> {
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            followUntilDone(path2);
-                            g.shoot(2);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            //followUntilDone(path3);
-                        });
-                    case 3:
-                        return new InstantAction(() -> {
-                            g.shoot(2);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            //followUntilDone(path2);
-                        });
-                }
-                break;
-            case PPG:
-                switch(row) {
-                    case 0:
-                        return new InstantAction(() -> {
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            followUntilDone(path2);
-                            g.shoot(2);
-                            //followUntilDone(path3);
-                        });
-                    case 1:
-                        return new InstantAction(() -> {
-                            g.shoot(2);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            //followUntilDone(path3);
-                        });
-                    case 2:
-                        return new InstantAction(() -> {
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            followUntilDone(path2);
-                            g.shoot(2);
-                            //followUntilDone(path3);
-                        });
-                    case 3:
-                        return new InstantAction(() -> {
-                            followUntilDone(path1);
-                            g.shoot(1);
-                            followUntilDone(path2);
-                            g.shoot(2);
-                            followUntilDone(path3);
-                            g.shoot(3);
-                            //followUntilDone(path3);
-                        });
-                }
-                break;
+
+    public class ShootInOrder implements Action {
+
+        int row;
+        ArrayList<Action> initialActions = new ArrayList<>();
+
+        public ShootInOrder(int row) {
+            this.row = row;
+            GreenFN.Motifs motif = g.getCurrentMotif();
+            if (motif == null) {
+                motif = GreenFN.currentMotif;
+            }
+            if (motif == null) {
+                motif = GreenFN.Motifs.PGP;
+            }
+            switch (motif) {
+                case GPP:
+                    switch (row) {
+                        case 0:
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(1));
+                            initialActions.add(shootStrafe(3));
+                            break;
+                        case 1:
+                            initialActions.add(shootStrafe(1));
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(3));
+                            break;
+                        case 2:
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(1));
+                            initialActions.add(shootStrafe(3));
+                            break;
+                        case 3:
+                            initialActions.add(shootStrafe(3));
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(1));
+                            break;
+                    }
+                    break;
+                case PGP:
+                    switch (row) {
+                        case 0:
+                            initialActions.add(shootStrafe(1));
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(3));
+                            break;
+                        case 1:
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(1));
+                            initialActions.add(shootStrafe(3));
+                            break;
+                        case 2:
+                            initialActions.add(shootStrafe(1));
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(3));
+                            break;
+                        case 3:
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(3));
+                            initialActions.add(shootStrafe(1));
+                            break;
+                    }
+                    break;
+                case PPG:
+                    switch (row) {
+                        case 0:
+                            initialActions.add(shootStrafe(1));
+                            initialActions.add(shootStrafe(3));
+                            initialActions.add(shootStrafe(2));
+                            break;
+                        case 1:
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(3));
+                            initialActions.add(shootStrafe(1));
+                            break;
+                        case 2:
+                            initialActions.add(shootStrafe(1));
+                            initialActions.add(shootStrafe(3));
+                            initialActions.add(shootStrafe(2));
+                            break;
+                        case 3:
+                            initialActions.add(shootStrafe(1));
+                            initialActions.add(shootStrafe(2));
+                            initialActions.add(shootStrafe(3));
+                            break;
+                    }
+                    break;
+            }
         }
-        return new InstantAction(()-> g.shoot(4));
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            if (initialActions.isEmpty()) {
+                return false;
+            }
+
+            if (initialActions.get(0).run(telemetryPacket)) {
+                return true;
+            } else {
+                initialActions.remove(0);
+            }
+            return true;
+        }
     }
+
+    public class ShootStrafe implements Action {
+
+        Pose translatorPose = new Pose(0, 5.70, 0);
+        boolean ran = false;
+
+        int shooter;
+        public ShootStrafe(int shooter) {
+            this.shooter = shooter;
+        }
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            if(!ran) {
+                translatorPose = translatorPose.rotate(follower.getPose().getHeading(), true);
+                Pose[] shooterPoses = {new Pose(0,0,0), launchPose.plus(translatorPose), launchPose, launchPose.minus(translatorPose)};
+                Path shooterPath = new Path(
+                        new BezierLine(
+                                g.follower.getPose(),
+                                shooterPoses[shooter]
+                        )
+                );
+                shooterPath.setConstantHeadingInterpolation(g.follower.getPose().getHeading());
+                g.follower.followPath(
+                        shooterPath
+                );
+            }
+            if(!g.follower.isBusy()) {
+                g.shoot(shooter);
+            }
+            return g.follower.isBusy();
+        }
+    }
+    public Action shootStrafe(int shooter) {
+        return new ShootStrafe(shooter);
+    }
+
+    public Action shootInOrder(int shooter) {
+        return new ShootInOrder(shooter);
+    }
+
     public static Pose middleShootPose = new Pose(59,84, Math.toRadians(230));
     public static Pose rightShootPose = new Pose(56,84, Math.toRadians(227));
     public static Pose leftShootPose = new Pose(59,89, Math.toRadians(220));
@@ -314,18 +327,6 @@ public class BlueAutoTwerk extends LinearOpMode {
         g.loadStoppers();
         g.follower.setStartingPose(startPose);
 
-        Path thirdShoot =
-                new Path(
-                        new BezierLine(g.follower.getPose(), leftShootPose)
-                );
-        Path firstShoot =
-                new Path(
-                        new BezierLine(g.follower.getPose(), rightShootPose)
-                );
-        Path secondShoot =
-                new Path(
-                        new BezierLine(g.follower.getPose(), middleShootPose)
-                );
         Path aprilTag =
                 new Path(
                         new BezierLine(startPose, aprilTagPose)
@@ -429,7 +430,7 @@ public class BlueAutoTwerk extends LinearOpMode {
                                 followUntilDone(scorePreload),
                                 g.loadAction(),
                                 new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 0, firstShoot, secondShoot, thirdShoot),
+                                shootInOrder(0),
                                 new SleepAction(g.minTimeBtwnShots*3 + 0.4),
                                 g.loadAction(),
                                 followUntilDone(gotoFirst),
@@ -437,7 +438,7 @@ public class BlueAutoTwerk extends LinearOpMode {
                                 new SleepAction(0.5),
                                 followUntilDone(scoreFirst),
                                 new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 1, firstShoot, secondShoot, thirdShoot),
+                                shootInOrder(1),
                                 new SleepAction(g.minTimeBtwnShots*3 + 0.4),
                                 g.loadAction(),
                                 followUntilDone(gotoSecond),
@@ -445,7 +446,7 @@ public class BlueAutoTwerk extends LinearOpMode {
                                 new SleepAction(0.5),
                                 followUntilDone(scoreSecond),
                                 new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 2, firstShoot, secondShoot, thirdShoot),
+                                shootInOrder(2),
                                 new SleepAction(g.minTimeBtwnShots*3 + 0.4),
                                 g.loadAction(),
                                 followUntilDone(gotoThird),
@@ -453,7 +454,7 @@ public class BlueAutoTwerk extends LinearOpMode {
                                 new SleepAction(0.5),
                                 followUntilDone(scoreThird),
                                 new SleepAction(0.5),
-                                shootInOrder(GreenFN.currentMotif, 3, firstShoot, secondShoot, thirdShoot),
+                                shootInOrder(3),
                                 followUntilDone(park)
                         )
                 )

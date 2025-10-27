@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.autos;
 
+import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -247,18 +249,62 @@ public class BlueAuto extends LinearOpMode {
     public Action shootInOrder(int row) {
         return new ShootInOrder(row);
     }
+
+    public class ShootStrafe implements Action {
+
+        Pose translatorPose = new Pose(0, 5.70, 0);
+        boolean ran = false;
+
+        int shooter;
+        public ShootStrafe(int shooter) {
+            this.shooter = shooter;
+        }
+
+        @Override
+        public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            if(!ran) {
+                translatorPose = translatorPose.rotate(follower.getPose().getHeading(), true);
+                Pose[] shooterPoses = {new Pose(0,0,0), g.follower.getPose().plus(translatorPose), g.follower.getPose(), g.follower.getPose().minus(translatorPose)};
+                Path shooterPath = new Path(
+                        new BezierLine(
+                                g.follower.getPose(),
+                                shooterPoses[shooter]
+                        )
+                );
+                shooterPath.setConstantHeadingInterpolation(g.follower.getPose().getHeading());
+                g.follower.followPath(
+                    shooterPath
+                );
+            }
+            if(!g.follower.isBusy()) {
+                g.shoot(shooter);
+            }
+            return g.follower.isBusy();
+        }
+    }
+    public Action shootStrafe(int shooter) {
+        return new ShootStrafe(shooter);
+    }
     public static Pose startPose = new Pose(15.0, 118.0, Math.toRadians(138));
 
-    public static double launchPoseX = 59, launchPoseY = 84, launchPoseHeading = Math.toRadians(230);
+//    X: : 33.92187403881643
+//    Y: 96.10909048966536
+//    apriltagheading: 0.0
+//    apriltagx: 0.0
+//    apriltagy: 0.0
+//    heading: : -2.627474546432495
+
+    public static double launchPoseX = 59, launchPoseY = 84, launchPoseHeading = Math.toRadians(224);
+//    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
     public static Pose launchPose = new Pose(launchPoseX, launchPoseY, launchPoseHeading);
 
     // Define all poses and headings as variables at the top
-    public static Pose aprilTagPose = new Pose(58.123, 84.872, Math.toRadians(160));
+    public static Pose aprilTagPose = new Pose(46.008, 96.996, Math.toRadians(160));
 
     // Intermediate poses
     public static Pose gotoFirstCtrl = new Pose(49.360, 98.516);
-    public static Pose firstIntakePose = new Pose(20.00, 100.0);
-    public static Pose firstIntakeEnd = new Pose(20.00, 89.835);
+    public static Pose firstIntakePose = new Pose(20.500, 100.0);
+    public static Pose firstIntakeEnd = new Pose(20.50, 89.835);
 
     public static Pose secondGotoPose = new Pose(20.00, 75.773);
     public static Pose secondIntakePose = new Pose(20.00, 65.489);
@@ -266,7 +312,7 @@ public class BlueAuto extends LinearOpMode {
     public static Pose thirdGotoPose = new Pose(20.00, 47.937);
     public static Pose thirdIntakePose = new Pose(20.000, 41.332);
 
-    public static Pose parkPose = new Pose(51.058, 76.058);
+    public static Pose parkPose = new Pose(45.058, 72.058);
 
     @Override
     public void runOpMode() {
@@ -291,6 +337,11 @@ public class BlueAuto extends LinearOpMode {
                 );
         scorePreload.setLinearHeadingInterpolation(aprilTagPose.getHeading(), launchPose.getHeading());
 
+        PathChain aprilTagPreload = new PathChain(
+                aprilTag,
+                scorePreload
+        );
+
         Path gotoFirst =
                 new Path(
                         new BezierCurve(launchPose, gotoFirstCtrl, firstIntakePose)
@@ -302,6 +353,11 @@ public class BlueAuto extends LinearOpMode {
                         new BezierLine(firstIntakePose, firstIntakeEnd)
                 );
         intakeFirst.setConstantHeadingInterpolation(Math.toRadians(0));
+
+        PathChain first = new PathChain(
+                gotoFirst,
+                intakeFirst
+        );
 
         Path scoreFirst =
                 new Path(
@@ -321,6 +377,11 @@ public class BlueAuto extends LinearOpMode {
                 );
         intakeSecond.setConstantHeadingInterpolation(Math.toRadians(0));
 
+        PathChain second = new PathChain(
+                gotoSecond,
+                intakeSecond
+        );
+
         Path scoreSecond =
                 new Path(
                         new BezierLine(secondIntakePose, launchPose)
@@ -338,6 +399,11 @@ public class BlueAuto extends LinearOpMode {
                         new BezierLine(thirdGotoPose, thirdIntakePose)
                 );
         intakeThird.setConstantHeadingInterpolation(Math.toRadians(0));
+
+        PathChain third = new PathChain(
+                gotoThird,
+                intakeThird
+        );
 
         Path scoreThird =
                 new Path(
@@ -366,7 +432,7 @@ public class BlueAuto extends LinearOpMode {
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
-                                g.setShooterRPM((int) GreenFN.shooterCloseRPM),
+                                g.setShooterRPM((int) 680),
                                 g.loadAction(),
                                 follow(aprilTag),
                                 new ParallelAction(
@@ -407,6 +473,7 @@ public class BlueAuto extends LinearOpMode {
                                 followUntilDone(scoreThird),
 //                                new SleepAction(0.5),
                                 shootInOrder(3),
+                                new SleepAction(GreenFN.minTimeBtwnShots *3),
                                 followUntilDone(park)
                         )
                 )
