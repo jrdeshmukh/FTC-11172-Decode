@@ -290,10 +290,10 @@ public class FarBlueAuto extends LinearOpMode {
 
     // Path 2
     public static Pose gotoSideMid1 = new Pose(49.195, 16.531);
-    public static Pose gotoSideEnd = new Pose(15.137, 9.500, Math.toRadians(-90));
+    public static Pose gotoSideEnd = new Pose(15.137, 10.200, Math.toRadians(-90));
 
     // Path 3
-    public static Pose intakeSideEnd = new Pose(10.556, 10, Math.toRadians(-90));
+    public static Pose intakeSideEnd = new Pose(10.556, 10.2, Math.toRadians(-90));
 
     // Path 4
     public static Pose scoreSideMid = new Pose(38.440, 21.710);

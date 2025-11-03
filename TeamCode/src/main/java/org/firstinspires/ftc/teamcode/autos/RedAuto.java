@@ -19,6 +19,7 @@ import com.pedropathing.paths.PathBuilder;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
@@ -29,6 +30,7 @@ import java.util.List;
 
 @Autonomous()
 @Config()
+@Disabled
 public class RedAuto extends LinearOpMode {
 
     GreenFN g;

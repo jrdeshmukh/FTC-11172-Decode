@@ -178,19 +178,19 @@ public class BlueAuto extends LinearOpMode {
                                 g.shoot(3);
                                 break;
                         case 1:
-                                g.shoot(1);
-                                g.shoot(2);
                                 g.shoot(3);
+                                g.shoot(2);
+                                g.shoot(1);
                             break;
                         case 2:
                                 g.shoot(2);
-                                g.shoot(1);
                                 g.shoot(3);
+                                g.shoot(1);
                             break;
                         case 3:
-                                g.shoot(3);
-                                g.shoot(2);
                                 g.shoot(1);
+                                g.shoot(2);
+                                g.shoot(3);
                             break;
                     }
                     break;
@@ -203,8 +203,8 @@ public class BlueAuto extends LinearOpMode {
                             break;
                         case 1:
                                 g.shoot(2);
-                                g.shoot(1);
                                 g.shoot(3);
+                                g.shoot(1);
                             break;
                         case 2:
                                 g.shoot(1);
@@ -213,8 +213,8 @@ public class BlueAuto extends LinearOpMode {
                             break;
                         case 3:
                                 g.shoot(2);
-                                g.shoot(3);
                                 g.shoot(1);
+                                g.shoot(3);
                             break;
                     }
                     break;
@@ -226,9 +226,9 @@ public class BlueAuto extends LinearOpMode {
                                 g.shoot(2);
                             break;
                         case 1:
+                                g.shoot(1);
                                 g.shoot(2);
                                 g.shoot(3);
-                                g.shoot(1);
                             break;
                         case 2:
                                 g.shoot(1);
@@ -236,9 +236,9 @@ public class BlueAuto extends LinearOpMode {
                                 g.shoot(2);
                             break;
                         case 3:
-                                g.shoot(1);
-                                g.shoot(2);
                                 g.shoot(3);
+                                g.shoot(2);
+                                g.shoot(1);
                             break;
                     }
                     break;
@@ -285,7 +285,7 @@ public class BlueAuto extends LinearOpMode {
     public Action shootStrafe(int shooter) {
         return new ShootStrafe(shooter);
     }
-    public static Pose startPose = new Pose(15.0, 118.0, Math.toRadians(138));
+    public static Pose startPose = new Pose(15.0, 118.0, Math.toRadians(141));
 
 //    X: : 33.92187403881643
 //    Y: 96.10909048966536
@@ -294,7 +294,7 @@ public class BlueAuto extends LinearOpMode {
 //    apriltagy: 0.0
 //    heading: : -2.627474546432495
 
-    public static double launchPoseX = 59, launchPoseY = 84, launchPoseHeading = Math.toRadians(224);
+    public static double launchPoseX = 59, launchPoseY = 84, launchPoseHeading = Math.toRadians(226);
 //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
     public static Pose launchPose = new Pose(launchPoseX, launchPoseY, launchPoseHeading);
 
@@ -303,14 +303,14 @@ public class BlueAuto extends LinearOpMode {
 
     // Intermediate poses
     public static Pose gotoFirstCtrl = new Pose(49.360, 98.516);
-    public static Pose firstIntakePose = new Pose(20.500, 100.0);
-    public static Pose firstIntakeEnd = new Pose(20.50, 89.835);
+    public static Pose firstIntakePose = new Pose(21.500, 100.0);
+    public static Pose firstIntakeEnd = new Pose(21.50, 89.835);
 
-    public static Pose secondGotoPose = new Pose(20.00, 75.773);
-    public static Pose secondIntakePose = new Pose(20.00, 65.489);
+    public static Pose secondGotoPose = new Pose(20.80, 75.773);
+    public static Pose secondIntakePose = new Pose(20.80, 65.489);
 
-    public static Pose thirdGotoPose = new Pose(20.00, 47.937);
-    public static Pose thirdIntakePose = new Pose(20.000, 41.332);
+    public static Pose thirdGotoPose = new Pose(21.50, 47.937);
+    public static Pose thirdIntakePose = new Pose(21.500, 41.332);
 
     public static Pose parkPose = new Pose(45.058, 72.058);
 
@@ -420,7 +420,9 @@ public class BlueAuto extends LinearOpMode {
 
 
 
-
+        GreenFN.detect = false;
+        GreenFN.intakeTarget = 0;
+        GreenFN.shooterTarget = 0;
         g.loadStoppers();
 
 
@@ -439,38 +441,51 @@ public class BlueAuto extends LinearOpMode {
                                         new SleepAction(0.5),
                                         g.loadAction(),
                                         new SequentialAction(
-                                                new SleepAction(0.2),
-                                                g.setIntakeRPM((int) GreenFN.intakeRPM)
+                                                g.setIntakeRPM((int) GreenFN.intakeRPM-100)
                                         )
                                 ),
                                 g.loadAction(),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 new WaitToDone(),
-                                followUntilDone(scorePreload),
+                                new InstantAction(() -> GreenFN.detect=true),
+                                follow(scorePreload),
                                 g.loadAction(),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM-100),
+                                new WaitToDone(),
 //                                new SleepAction(0.5),
                                 shootInOrder( 0),
                                 new SleepAction(GreenFN.minTimeBtwnShots *3),
                                 g.loadAction(),
+
                                 followUntilDone(gotoFirst),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM+250),
                                 followUntilDone(intakeFirst),
                                 new SleepAction(0.2),
-                                followUntilDone(scoreFirst),
+                                follow(scoreFirst),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM-100),
+                                new WaitToDone(),
 //                                new SleepAction(0.5),
                                 shootInOrder(1),
                                 new SleepAction(GreenFN.minTimeBtwnShots *3),
                                 g.loadAction(),
                                 followUntilDone(gotoSecond),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM+250),
                                 followUntilDone(intakeSecond),
                                 new SleepAction(0.2),
-                                followUntilDone(scoreSecond),
+                                follow(scoreSecond),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM-100),
+                                new WaitToDone(),
 //                                new SleepAction(0.5),
                                 shootInOrder(2),
                                 new SleepAction(GreenFN.minTimeBtwnShots *3),
                                 g.loadAction(),
                                 followUntilDone(gotoThird),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM+250),
                                 followUntilDone(intakeThird),
                                 new SleepAction(0.2),
-                                followUntilDone(scoreThird),
+                                follow(scoreThird),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM-100),
+                                new WaitToDone(),
 //                                new SleepAction(0.5),
                                 shootInOrder(3),
                                 new SleepAction(GreenFN.minTimeBtwnShots *3),

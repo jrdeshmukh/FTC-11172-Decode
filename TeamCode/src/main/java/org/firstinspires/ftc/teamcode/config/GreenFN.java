@@ -37,7 +37,7 @@ import java.util.List;
 
 @Config
 public class GreenFN {
-    public static double shooterCloseRPM = 725;
+    public static double shooterCloseRPM = 673;
     public static double intakeRPM = 600;
     public static double closeHoodAngle = 80;
     private VisionPortal visionPortal;
@@ -60,7 +60,7 @@ public class GreenFN {
     public Servo stopper1, stopper2, stopper3;
     public Follower follower;
 
-    public static double minTimeBtwnShots = 0.6;
+    public static double minTimeBtwnShots = 0.52;
 
     public boolean loaded = true, divided = false;
 
@@ -78,11 +78,11 @@ public class GreenFN {
 
 
 
-    public static double stopperIntake=0.83, stopperLoad=0.61, stopperShoot=0.13;
-    public static double stopper1Load = 0.65, stopper2Load = 0.33; //0.47
-    public static double stopper3Load = 0.55;
-    public static double stopper1Intake = 0.85, stopper2Intake = 0.56;// 0.655,
-    public static double stopper3Intake = 0.745;
+    public static double stopperIntake=0.83, stopperLoad=0.61, stopperShoot=0.05;
+    public static double stopper1Load = 0.32, stopper2Load = 0.34; //0.47
+    public static double stopper3Load = 0.39;
+    public static double stopper1Intake = 0.54, stopper2Intake = 0.59;// 0.655,
+    public static double stopper3Intake = 0.62;
 
     public double stop1pos, stop2pos, stop3pos;
 
@@ -100,6 +100,7 @@ public class GreenFN {
     public static Motifs currentMotif = null;
 
     public int counter = 0;
+    public static boolean detect = true;
 
     public Timer shotTimer;
     public double recentShotTime = 0;
@@ -276,7 +277,7 @@ public class GreenFN {
 
 
 
-        if(counter%10==0) {
+        if(counter%15==0) {
             stop1pos = stopper1.getPosition();
             stop2pos = stopper2.getPosition();
             stop3pos = stopper3.getPosition();
@@ -314,7 +315,7 @@ public class GreenFN {
             modifiedShooterRPM = shooterTarget;
         }
 
-        if (currentMotif == null) {
+        if (currentMotif == null && detect) {
             updateAprilTagDetection();
 
         }
