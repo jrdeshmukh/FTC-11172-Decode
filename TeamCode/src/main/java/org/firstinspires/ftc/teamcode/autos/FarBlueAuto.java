@@ -16,10 +16,11 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathBuilder;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.lynx.LynxModule;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.config.GreenFN;
 
@@ -170,72 +171,72 @@ public class FarBlueAuto extends LinearOpMode {
                 case GPP:
                     switch(row) {
                         case 0:
-                                g.shoot(2);
-                                g.shoot(1);
-                                g.shoot(3);
-                                break;
+                            g.shoot(2);
+                            g.shoot(1);
+                            g.shoot(3);
+                            break;
                         case 1:
-                                g.shoot(1);
-                                g.shoot(2);
-                                g.shoot(3);
+                            g.shoot(3);
+                            g.shoot(2);
+                            g.shoot(1);
                             break;
                         case 2:
-                                g.shoot(2);
-                                g.shoot(1);
-                                g.shoot(3);
+                            g.shoot(2);
+                            g.shoot(3);
+                            g.shoot(1);
                             break;
                         case 3:
-                                g.shoot(3);
-                                g.shoot(2);
-                                g.shoot(1);
+                            g.shoot(1);
+                            g.shoot(2);
+                            g.shoot(3);
                             break;
                     }
                     break;
                 case PGP:
                     switch(row) {
                         case 0:
-                                g.shoot(1);
-                                g.shoot(2);
-                                g.shoot(3);
+                            g.shoot(1);
+                            g.shoot(2);
+                            g.shoot(3);
                             break;
                         case 1:
-                                g.shoot(2);
-                                g.shoot(1);
-                                g.shoot(3);
+                            g.shoot(2);
+                            g.shoot(3);
+                            g.shoot(1);
                             break;
                         case 2:
-                                g.shoot(1);
-                                g.shoot(2);
-                                g.shoot(3);
+                            g.shoot(1);
+                            g.shoot(2);
+                            g.shoot(3);
                             break;
                         case 3:
-                                g.shoot(2);
-                                g.shoot(3);
-                                g.shoot(1);
+                            g.shoot(2);
+                            g.shoot(1);
+                            g.shoot(3);
                             break;
                     }
                     break;
                 case PPG:
                     switch(row) {
                         case 0:
-                                g.shoot(1);
-                                g.shoot(3);
-                                g.shoot(2);
+                            g.shoot(1);
+                            g.shoot(3);
+                            g.shoot(2);
                             break;
                         case 1:
-                                g.shoot(2);
-                                g.shoot(3);
-                                g.shoot(1);
+                            g.shoot(1);
+                            g.shoot(2);
+                            g.shoot(3);
                             break;
                         case 2:
-                                g.shoot(1);
-                                g.shoot(3);
-                                g.shoot(2);
+                            g.shoot(1);
+                            g.shoot(3);
+                            g.shoot(2);
                             break;
                         case 3:
-                                g.shoot(1);
-                                g.shoot(2);
-                                g.shoot(3);
+                            g.shoot(3);
+                            g.shoot(2);
+                            g.shoot(1);
                             break;
                     }
                     break;
@@ -270,7 +271,7 @@ public class FarBlueAuto extends LinearOpMode {
                 );
                 shooterPath.setConstantHeadingInterpolation(g.follower.getPose().getHeading());
                 g.follower.followPath(
-                    shooterPath
+                        shooterPath
                 );
             }
             if(!g.follower.isBusy()) {
@@ -282,43 +283,32 @@ public class FarBlueAuto extends LinearOpMode {
     public Action shootStrafe(int shooter) {
         return new ShootStrafe(shooter);
     }
-    // Shared scoring end pose
-    public static Pose launchPose = new Pose(64.332, 12.747, Math.toRadians(200));
 
-    // Path 1
-    public static Pose startPose = new Pose(57.162, 9.162, Math.toRadians(180));
+    // New Pose Definitions based on the new paths
 
-    // Path 2
-    public static Pose gotoSideMid1 = new Pose(49.195, 16.531);
-    public static Pose gotoSideEnd = new Pose(15.137, 10.200, Math.toRadians(-90));
+    // START POSE (from Path1 start)
+    public static Pose startPose = new Pose(57.098, 9.248, Math.toRadians(180));
 
-    // Path 3
-    public static Pose intakeSideEnd = new Pose(10.556, 10.2, Math.toRadians(-90));
+    // LAUNCH POSE (from Path1 end, Path4 end, Path7 end, Path8 start)
+    public static double launchPoseX = 59.000, launchPoseY = 84.000, launchPoseHeading = Math.toRadians(226);
+    public static Pose launchPose = new Pose(launchPoseX, launchPoseY, launchPoseHeading);
 
-    // Path 4
-    public static Pose scoreSideMid = new Pose(38.440, 21.710);
+    // INTERMEDIATE POSES (from the new path coordinates)
 
-    // Path 5
-    public static Pose gotoFirstEnd = new Pose(24.299, 23.701, Math.toRadians(180));
+    // Poses for First Intake (from Path2 & Path3)
+    public static Pose firstIntakeCtrl = new Pose(56.532, 11.512); // P2 control point
+    public static Pose firstIntakeStart = new Pose(24.259, 21.704); // P2 end / P3 start
+    public static Pose firstIntakeEnd = new Pose(23.882, 30.952); // P3 end / P4 start
+    public static Pose firstScoreCtrl = new Pose(58.608, 49.258); // P4 control point
 
-    // Path 6
-    public static Pose intakeFirstEnd = new Pose(24.299, 29.079, Math.toRadians(180));
+    // Poses for Second Intake (from Path5 & Path6)
+    public static Pose secondIntakeCtrl = new Pose(50.870, 41.520); // P5 control point
+    public static Pose secondIntakeStart = new Pose(17.087, 9.436); // P5 end / P6 start
+    public static Pose secondIntakeEnd = new Pose(9.349, 9.059); // P6 end / P7 start
+    public static Pose secondScoreCtrl = new Pose(56.909, 52.089); // P7 control point
 
-// Path 7
-// goes back to launchPose
-
-    // Path 8
-    public static Pose gotoSecondEnd = new Pose(24.299, 47.801, Math.toRadians(180));
-
-    // Path 9
-    public static Pose intakeSecondEnd = new Pose(24.299, 53.975, Math.toRadians(180));
-
-// Path 10
-// goes back to launchPose
-
-    // Path 11
-    public static Pose parkEnd = new Pose(39.436, 14.739, Math.toRadians(200));
-
+    // Park Pose (from Path8 end)
+    public static Pose parkPose = new Pose(59.363, 61.526);
 
     @Override
     public void runOpMode() {
@@ -331,78 +321,66 @@ public class FarBlueAuto extends LinearOpMode {
         g.loadStoppers();
         g.follower.setStartingPose(startPose);
 
+        // Path 1 -> scorePreload
         Path scorePreload =
                 new Path(
                         new BezierLine(startPose, launchPose)
                 );
         scorePreload.setLinearHeadingInterpolation(startPose.getHeading(), launchPose.getHeading());
 
-         Path gotoSide =
+        // Path 2 -> gotoIntake1
+        Path gotoIntake1 =
                 new Path(
-                        new BezierCurve(launchPose, gotoSideMid1, gotoSideEnd)
+                        new BezierCurve(launchPose, firstIntakeCtrl, firstIntakeStart)
                 );
-        gotoSide.setLinearHeadingInterpolation(launchPose.getHeading(), gotoSideEnd.getHeading());
+        gotoIntake1.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(180));
 
-        Path intakeSide =
+        // Path 3 -> intake1
+        Path intake1 =
                 new Path(
-                        new BezierLine(gotoSideEnd, intakeSideEnd)
+                        new BezierLine(firstIntakeStart, firstIntakeEnd)
                 );
-        intakeSide.setConstantHeadingInterpolation(intakeSideEnd.getHeading());
+        intake1.setConstantHeadingInterpolation(Math.toRadians(180));
 
-        Path scoreSide =
+        // Path 4 -> score1
+        Path score1 =
                 new Path(
-                        new BezierCurve(intakeSideEnd, scoreSideMid, launchPose)
+                        new BezierCurve(firstIntakeEnd, firstScoreCtrl, launchPose)
                 );
-        scoreSide.setLinearHeadingInterpolation(intakeSideEnd.getHeading(), launchPose.getHeading());
+        score1.setLinearHeadingInterpolation(Math.toRadians(180), launchPose.getHeading());
 
-        Path gotoFirst =
+        // Path 5 -> gotoIntake2
+        Path gotoIntake2 =
                 new Path(
-                        new BezierLine(launchPose, gotoFirstEnd)
+                        new BezierCurve(launchPose, secondIntakeCtrl, secondIntakeStart)
                 );
-        gotoFirst.setLinearHeadingInterpolation(launchPose.getHeading(), gotoFirstEnd.getHeading());
+        gotoIntake2.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(-90));
 
-        Path intakeFirst =
+        // Path 6 -> intake2
+        Path intake2 =
                 new Path(
-                        new BezierLine(gotoFirstEnd, intakeFirstEnd)
+                        new BezierLine(secondIntakeStart, secondIntakeEnd)
                 );
-        intakeFirst.setConstantHeadingInterpolation(intakeFirstEnd.getHeading());
+        intake2.setConstantHeadingInterpolation(Math.toRadians(-90));
 
-        Path scoreFirst =
+        // Path 7 -> score2
+        Path score2 =
                 new Path(
-                        new BezierLine(intakeFirstEnd, launchPose)
+                        new BezierCurve(secondIntakeEnd, secondScoreCtrl, launchPose)
                 );
-        scoreFirst.setLinearHeadingInterpolation(intakeFirstEnd.getHeading(), launchPose.getHeading());
+        score2.setLinearHeadingInterpolation(Math.toRadians(-90), launchPose.getHeading());
 
-        Path gotoSecond =
-                new Path(
-                        new BezierLine(launchPose, gotoSecondEnd)
-                );
-        gotoSecond.setLinearHeadingInterpolation(launchPose.getHeading(), gotoSecondEnd.getHeading());
-
-        Path intakeSecond =
-                new Path(
-                        new BezierLine(gotoSecondEnd, intakeSecondEnd)
-                );
-        intakeSecond.setConstantHeadingInterpolation(intakeSecondEnd.getHeading());
-
-        Path scoreSecond =
-                new Path(
-                        new BezierLine(intakeSecondEnd, launchPose)
-                );
-        scoreSecond.setLinearHeadingInterpolation(intakeSecondEnd.getHeading(), launchPose.getHeading());
-
+        // Path 8 -> park
         Path park =
                 new Path(
-                        new BezierLine(launchPose, parkEnd)
+                        new BezierLine(launchPose, parkPose)
                 );
-        park.setConstantHeadingInterpolation(parkEnd.getHeading());
+        park.setTangentHeadingInterpolation();
 
 
-
-
-
-
-
+        GreenFN.detect = false;
+        GreenFN.intakeTarget = 0;
+        GreenFN.shooterTarget = 0;
         g.loadStoppers();
 
 
@@ -410,44 +388,44 @@ public class FarBlueAuto extends LinearOpMode {
             g.update();
         }
         if(isStopRequested()) return;
+
+        // --- Autonomous Sequence using new paths ---
         Actions.runBlocking(
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
-                                g.setShooterRPM((int) GreenFN.shooterFarRPM),
+                                // Initial setup
+                                g.setShooterRPM((int) 680),
                                 g.loadAction(),
-                                follow(scorePreload),
-                                g.setIntakeRPM((int) GreenFN.intakeRPM),
+
+                                // Score Preload
+                                followUntilDone(scorePreload), // Move to launchPose
                                 g.loadAction(),
-                                new WaitToDone(),
+                                new InstantAction(() -> GreenFN.detect = true),
+                                shootInOrder(0),
+                                new SleepAction(GreenFN.minTimeBtwnShots * 3),
                                 g.loadAction(),
-//                                new SleepAction(0.5),
-                                shootInOrder( 0),
-                                new SleepAction(GreenFN.minTimeBtwnShots *3),
-                                g.loadAction(),
-                                followUntilDone(gotoSide),
-                                followUntilDone(intakeSide),
-                                new SleepAction(0.2),
-                                followUntilDone(scoreSide),
-//                                new SleepAction(0.5),
+
+                                // First Intake Run and Score
+                                followUntilDone(gotoIntake1), // Move towards intake zone
+                                new InstantAction(() -> g.setIntakeRPM((int) GreenFN.intakeRPM+250)),
+                                followUntilDone(intake1), // Intake path
+                                new SleepAction(0.2), // Wait for intake
+                                followUntilDone(score1), // Move back to launchPose
                                 shootInOrder(1),
-                                new SleepAction(GreenFN.minTimeBtwnShots *3),
+                                new SleepAction(GreenFN.minTimeBtwnShots * 3),
                                 g.loadAction(),
-                                followUntilDone(gotoFirst),
-                                followUntilDone(intakeFirst),
-                                new SleepAction(0.2),
-                                followUntilDone(scoreFirst),
-//                                new SleepAction(0.5),
+
+                                // Second Intake Run and Score
+                                followUntilDone(gotoIntake2), // Move towards intake zone
+                                followUntilDone(intake2), // Intake path
+                                new SleepAction(0.2), // Wait for intake
+                                followUntilDone(score2), // Move back to launchPose
                                 shootInOrder(2),
-                                new SleepAction(GreenFN.minTimeBtwnShots *3),
+                                new SleepAction(GreenFN.minTimeBtwnShots * 3),
                                 g.loadAction(),
-                                followUntilDone(gotoSecond),
-                                followUntilDone(intakeSecond),
-                                new SleepAction(0.2),
-                                followUntilDone(scoreSecond),
-//                                new SleepAction(0.5),
-                                shootInOrder(3),
-                                new SleepAction(GreenFN.minTimeBtwnShots *3),
+
+                                // Park
                                 followUntilDone(park)
                         )
                 )

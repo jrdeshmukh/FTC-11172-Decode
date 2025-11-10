@@ -37,7 +37,8 @@ import java.util.List;
 
 @Config
 public class GreenFN {
-    public static double shooterCloseRPM = 673;
+    public static double shooterCloseRPM = 676;
+    public static double shooterAutoRPM = 672;
     public static double intakeRPM = 600;
     public static double closeHoodAngle = 80;
     private VisionPortal visionPortal;
@@ -277,14 +278,14 @@ public class GreenFN {
 
 
 
-        if(counter%15==0) {
+//        if(counter%15==0) {
             stop1pos = stopper1.getPosition();
             stop2pos = stopper2.getPosition();
             stop3pos = stopper3.getPosition();
             stopper1.setPosition(stop1pos);
             stopper2.setPosition(stop2pos);
             stopper3.setPosition(stop3pos);
-        }
+//        }
         counter++;
 //        loadStoppers();
 
@@ -416,6 +417,20 @@ public class GreenFN {
 //            lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
 //        }
 //    }
+
+    public List<AprilTagDetection> getApriltagDetections() {
+        return aprilTag.getDetections();
+    }
+
+    public double getGoalHeadingTarget() {
+        List<AprilTagDetection> detections = getApriltagDetections();
+        for(AprilTagDetection detection: detections) {
+            if(detection.id==24 || detection.id==20) {
+                return getPose().getHeading() + detection.ftcPose.bearing;
+            }
+        }
+        return getPose().getHeading();
+    }
 
     public void updateAprilTagDetection() {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
