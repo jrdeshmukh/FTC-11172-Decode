@@ -17,12 +17,12 @@ import org.firstinspires.ftc.teamcode.config.FollowerBuilderNew;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(12.9727418)
-            .forwardZeroPowerAcceleration(-31)
-            .lateralZeroPowerAcceleration(-76)
+            .mass(14.24)
+            .forwardZeroPowerAcceleration(-33.2)
+            .lateralZeroPowerAcceleration(-61.5)
             .translationalPIDFCoefficients(new PIDFCoefficients(0.3, 0, 0.04, 0))
-            .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0.08, 0.01))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.02, 0,0.00001,0.6, 0.01))
+            .headingPIDFCoefficients(new PIDFCoefficients(0.95, 0, 0.08, 0.01))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.025,0,0.000030,0.6,0.01))
             ;
 
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -35,8 +35,8 @@ public class Constants {
             .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .xVelocity(84)
-            .yVelocity(65)
+            .xVelocity(76.25) //84
+            .yVelocity(56.40) //65
             .useBrakeModeInTeleOp(true)
             ;
 
@@ -49,7 +49,7 @@ public class Constants {
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED)
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 0.2, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 0.6, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilderNew(followerConstants, hardwareMap)

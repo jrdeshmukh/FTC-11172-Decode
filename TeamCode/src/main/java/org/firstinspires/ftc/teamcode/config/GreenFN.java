@@ -15,15 +15,19 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -37,25 +41,43 @@ import java.util.List;
 
 @Config
 public class GreenFN {
-    public static double shooterCloseRPM = 676;
-    public static double shooterAutoRPM = 672;
+    public static double shooterCloseRPM = 645;
+    public static double shooterAutoRPM = 668;
     public static double intakeRPM = 600;
     public static double closeHoodAngle = 80;
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
 
+    enum Colors {
+        PURPLE,
+        GREEN,
+        NONE
+    }
+
+    public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
+
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.002, intakekI=0, intakekD=0.00, shooterkP=0.05, shooterkI=0.1, shooterkD=0.0001, intakeKF = 0.0009, shooterkF = 0.00024;
+    public static double intakekP = 0.002, intakekI = 0, intakekD = 0.00, shooterkP = 0.05, shooterkI = 0.1, shooterkD = 0.0001, intakeKF = 0.0009, shooterkF = 0.00024;
     public DcMotorEx shooter1, shooter2, intake;
-    public ColorSensor colorSensor1, colorSensor2, colorSensor3;
+//    public NormalizedColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
-    public static double shooterTarget =0, intakeTarget=0;
+    public static double shooterTarget = 0, intakeTarget = 0;
     public static double actualShooterCloseRPM = 810;
     public static double shooterFarRPM = 1100;
 
+    public static double[] distances = new double[3];
+    public static NormalizedRGBA[] colors = new NormalizedRGBA[3];
+
+    public static boolean[] ballInSlot = new boolean[]{false, false, false};
+    public static Colors[] ballColors = new Colors[]{Colors.NONE, Colors.NONE, Colors.NONE};
+
+    public boolean colorSensorUpdated = false, slotsUpdated=false;
+    public boolean toUpdateColorSensor = false, toUpdateSlots = false;
     public int recentServoShot = 0;
 
-    public double s1v=0, s2v=0, iv=0;
+    public double s1v = 0, s2v = 0, iv = 0;
+
+    public double adjustedX = 0, adjustedY = 0;
 
 
     public Servo stopper1, stopper2, stopper3;
@@ -69,7 +91,7 @@ public class GreenFN {
     public static int automotif = -1;
 
     public static double intakePower, flywheel1Power, flywheel2Power;
-    public Pose currentPose = new Pose(0,0,0);
+    public Pose currentPose = new Pose(0, 0, 0);
     public double angvel = 0;
 
     // --- Heading Lock Variables ---
@@ -78,8 +100,8 @@ public class GreenFN {
     private PIDController headingLockController = new PIDController(0.02, 0, 0.001);
 
 
-
-    public static double stopperIntake=0.83, stopperLoad=0.61, stopperShoot=0.05;
+    public static double stopperIntake = 0.83, stopperLoad = 0.61, stopperShoot = 0.05;
+    public static double stopper1Shoot = 0.025, stopper2Shoot = 0.05, stopper3Shoot = 0.1;
     public static double stopper1Load = 0.32, stopper2Load = 0.34; //0.47
     public static double stopper3Load = 0.39;
     public static double stopper1Intake = 0.54, stopper2Intake = 0.59;// 0.655,
@@ -92,6 +114,7 @@ public class GreenFN {
 
     FirstBoolean lodded = new FirstBoolean();
 
+
     public enum Motifs {
         GPP,
         PGP,
@@ -101,35 +124,39 @@ public class GreenFN {
     public static Motifs currentMotif = null;
 
     public int counter = 0;
+    public int colorCounter = 0;
     public static boolean detect = true;
 
     public Timer shotTimer;
     public double recentShotTime = 0;
-    public static Pose fromApriltag = new Pose(0,0,0);
-    public static double modifiedShooterRPM  = shooterTarget;
+    public static Pose fromApriltag = new Pose(0, 0, 0);
+    public static double modifiedShooterRPM = shooterTarget;
 
     // 🔧 Camera position offsets relative to robot center (in inches)
-    public static final double CAMERA_X_OFFSET = 3.5f;
-    public static final double CAMERA_Y_OFFSET = 7.0f;
+    public static final double CAMERA_X_OFFSET = 2.2;
+    public static final double CAMERA_Y_OFFSET = 5.6f;
     public static final double CAMERA_Z_OFFSET = 4.0f;
     public static final double CAMERA_TILT_DEGREES = 20.0f; // degrees tilted back (affects distance slightly)
 
     // 🗺️ Define AprilTag field positions (example values for Centerstage)
     // Tag IDs and their coordinates on the field
-    public static Pose TAG_20 = new Pose(16.3f, 131f, 45f);
-    public static final Pose TAG_24 = new Pose(43f, 40f, 135f);
+    public static Pose TAG_20 = new Pose(15.5, 131.5, Math.toRadians(-36));
+    public static final Pose TAG_24 = new Pose(128.6, 131.5, Math.toRadians(216));
+    public static Pose TAG_20_SHIFTED = new Pose(127.7, 13, Math.toRadians(180-36));
     //public static final TagPose TAG_3 = new TagPose(120f, 36f, 180f);
     //public static final TagPose TAG_4 = new TagPose(60f, 108f, 0f);
     // 🔹 Add or edit these with the real field coordinates for your game
 
 
-    
     // --- Method to get a tag's known field position ---
     public static Pose getTagFieldPosition(int id) {
         switch (id) {
-            case 20: return TAG_20;
-            case 24: return TAG_24;
-            default: return null;
+            case 20:
+                return TAG_20;
+            case 24:
+                return TAG_24;
+            default:
+                return null;
         }
     }
 
@@ -176,10 +203,11 @@ public class GreenFN {
         boolean called = false;
         boolean holdEnd = true;
 
-        public FollowUntilDone(Path a)  {
+        public FollowUntilDone(Path a) {
             this.a = a;
         }
-        public FollowUntilDone(Path a, boolean holdEnd)  {
+
+        public FollowUntilDone(Path a, boolean holdEnd) {
             this.a = a;
             this.holdEnd = holdEnd;
         }
@@ -187,7 +215,7 @@ public class GreenFN {
 
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-            if(!called) {
+            if (!called) {
                 follower.followPath(a, holdEnd);
                 called = true;
             }
@@ -200,13 +228,13 @@ public class GreenFN {
         PathChain a;
         boolean called = false;
 
-        public FollowUntilDoneChain(PathChain a)  {
+        public FollowUntilDoneChain(PathChain a) {
             this.a = a;
         }
 
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-            if(!called) {
+            if (!called) {
                 follower.followPath(a);
                 called = true;
             }
@@ -234,9 +262,9 @@ public class GreenFN {
         shotTimer = new Timer();
         recentShotTime = shotTimer.getElapsedTimeSeconds();
 
-//        colorSensor1 = map.get(ColorSensor.class, "colorSensor1");
-//        colorSensor2 = map.get(ColorSensor.class, "colorSensor2");
-//        colorSensor3 = map.get(ColorSensor.class, "colorSensor3");
+        colorSensor1 = map.get(RevColorSensorV3.class, "colorSensor1");
+        colorSensor2 = map.get(RevColorSensorV3.class, "colorSensor2");
+        colorSensor3 = map.get(RevColorSensorV3.class, "colorSensor3");
 //        lights = map.get(RevBlinkinLedDriver.class, "lights");
 //        lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
         // Create the AprilTag processor the easy way.
@@ -277,31 +305,33 @@ public class GreenFN {
 //        }
 
 
-
-//        if(counter%15==0) {
+        if(counter%20==0) {
             stop1pos = stopper1.getPosition();
             stop2pos = stopper2.getPosition();
             stop3pos = stopper3.getPosition();
             stopper1.setPosition(stop1pos);
             stopper2.setPosition(stop2pos);
             stopper3.setPosition(stop3pos);
-//        }
+            counter = 0;
+        }
         counter++;
 //        loadStoppers();
 
         List<Servo> toRemove = new ArrayList<>();
         for (Servo s : shooterQueue) {
             if (shotTimer.getElapsedTimeSeconds() - recentShotTime > minTimeBtwnShots) {
-                s.setPosition(stopperShoot);
                 toRemove.add(s);
-                if(s==stopper1) {
+                if (s.equals(stopper1)) {
                     recentServoShot = 1;
+                    stopper1.setPosition(stopper1Shoot);
                 }
-                if(s==stopper2) {
+                if (s.equals(stopper2)) {
                     recentServoShot = 2;
+                    stopper2.setPosition(stopper2Shoot);
                 }
-                if(s==stopper3) {
+                if (s.equals(stopper3)) {
                     recentServoShot = 3;
+                    stopper3.setPosition(stopper3Shoot);
                 }
                 recentShotTime = shotTimer.getElapsedTimeSeconds();
             }
@@ -310,15 +340,23 @@ public class GreenFN {
 
 
         if (!loaded) {
-            modifiedShooterRPM= shooterTarget/2;
+            modifiedShooterRPM = 0;
         }
-        if(loaded) {
+        if (loaded) {
             modifiedShooterRPM = shooterTarget;
         }
 
         if (currentMotif == null && detect) {
             updateAprilTagDetection();
 
+        }
+        colorSensorUpdated = false;
+        if(toUpdateColorSensor) {
+            updateColorSensor();
+        }
+        slotsUpdated = false;
+        if(toUpdateSlots) {
+            updateSlotDetection();
         }
     }
 
@@ -327,6 +365,9 @@ public class GreenFN {
     }
 
     public void intakeStoppers() {
+        stopper1.setPosition(stopper1Intake-0.2);
+        stopper2.setPosition(stopper2Intake-0.2);
+        stopper3.setPosition(stopper3Intake-0.2);
         stopper1.setPosition(stopper1Intake);
         stopper2.setPosition(stopper2Intake);
         stopper3.setPosition(stopper3Intake);
@@ -334,6 +375,9 @@ public class GreenFN {
     }
 
     public void loadStoppers() {
+        stopper1.setPosition(stopper1Load+0.2);
+        stopper2.setPosition(stopper2Load+0.2);
+        stopper3.setPosition(stopper3Load+0.2);
         stopper1.setPosition(stopper1Load);
         stopper2.setPosition(stopper2Load);
         stopper3.setPosition(stopper3Load);
@@ -341,7 +385,7 @@ public class GreenFN {
     }
 
     public void shoot(int shooter) {
-        switch(shooter) {
+        switch (shooter) {
             case 1:
                 shooterQueue.add(stopper1);
 //                stopper1.setPosition(stopperShoot);
@@ -366,6 +410,29 @@ public class GreenFN {
         }
     }
 
+    public void updateSlotDetection() {
+        if(colorCounter%5==0) {
+            updateColorSensor();
+            colorCounter=0;
+        }
+        for(int i = 0; i < 3; i++) {
+            if(distances[i] < 1.3) {
+                ballInSlot[i] = true;
+                if(colors[i].green>0.03) {
+                    ballColors[i] = Colors.GREEN;
+                }
+                else {
+                    ballColors[i] = Colors.PURPLE;
+                }
+            }
+            else {
+                ballInSlot[i] = false;
+                ballColors[i] = Colors.NONE;
+            }
+        }
+        slotsUpdated = true;
+    }
+
     public void load() {
         stopper1.setPosition(stopper1Load);
         stopper2.setPosition(stopper2Load);
@@ -374,18 +441,36 @@ public class GreenFN {
     }
 
     public void updatePIDs() {
-        flywheel1Power = shooterController1.calculate(s1v, modifiedShooterRPM) + s1v* shooterkF;
-        flywheel2Power = shooterController2.calculate(s2v, modifiedShooterRPM) + s2v* shooterkF;
+        flywheel1Power = shooterController1.calculate(s1v, modifiedShooterRPM) + s1v * shooterkF;
+        flywheel2Power = shooterController2.calculate(s2v, modifiedShooterRPM) + s2v * shooterkF;
 
-        intakePower = intakeController.calculate(iv, intakeTarget) + iv*intakeKF;
-
-        shooter1.setPower(flywheel1Power);
-        shooter2.setPower(flywheel1Power);
-        intake.setPower(intakePower);
-
+        intakePower = intakeController.calculate(iv, intakeTarget) + iv * intakeKF;
         intakeController.setPID(intakekP, intakekI, intakekD);
         shooterController1.setPID(shooterkP, shooterkI, shooterkD);
         shooterController1.setPID(shooterkP, shooterkI, shooterkD);
+        intake.setPower(intakePower);
+
+        if(modifiedShooterRPM==0) {
+            shooter1.setPower(0);
+            shooter2.setPower(0);
+            return;
+        }
+
+        shooter1.setPower(flywheel1Power);
+        shooter2.setPower(flywheel1Power);
+
+
+
+    }
+
+    public void updateColorSensor() {
+        distances[0] = colorSensor1.getDistance(DistanceUnit.INCH);
+        distances[1] = colorSensor2.getDistance(DistanceUnit.INCH);
+        distances[2] = colorSensor3.getDistance(DistanceUnit.INCH);
+        colors[0] = colorSensor1.getNormalizedColors();
+        colors[1] = colorSensor2.getNormalizedColors();
+        colors[2] = colorSensor3.getNormalizedColors();
+        colorSensorUpdated = true;
     }
 
 //    public void updateLights() {
@@ -424,8 +509,8 @@ public class GreenFN {
 
     public double getGoalHeadingTarget() {
         List<AprilTagDetection> detections = getApriltagDetections();
-        for(AprilTagDetection detection: detections) {
-            if(detection.id==24 || detection.id==20) {
+        for (AprilTagDetection detection : detections) {
+            if (detection.id == 24 || detection.id == 20) {
                 return getPose().getHeading() + detection.ftcPose.bearing;
             }
         }
@@ -456,36 +541,48 @@ public class GreenFN {
     }
 
     public Action setIntakeRPM(double rpm) {
-        return new InstantAction(() -> {intakeTarget=rpm;});
+        return new InstantAction(() -> {
+            intakeTarget = rpm;
+        });
     }
 
-    public Action setShooterRPM(double rpm) { return new InstantAction(() -> shooterTarget =rpm); }
+    public Action setShooterRPM(double rpm) {
+        return new InstantAction(() -> shooterTarget = rpm);
+    }
 
-    public Action shootAction(int shooter) {return new InstantAction(() -> shoot(shooter));}
-    public Action loadAction() {return new InstantAction(this::load);}
+    public Action shootAction(int shooter) {
+        return new InstantAction(() -> shoot(shooter));
+    }
+
+    public Action loadAction() {
+        return new InstantAction(this::load);
+    }
+
     /**
      * Converts an AprilTag detection into the robot’s absolute field position.
+     *
      * @param detection The AprilTag detection from AprilTagProcessor
      * @return double[] {robotX, robotY, robotHeading} in field coordinates
      */
     public static Pose convertToFieldPosition(AprilTagDetection detection) {
         if (detection == null) {
-            return new Pose(0,0,0);
+            return new Pose(0, 0, 0);
         }
 
         Pose tagFieldPosition = getTagFieldPosition(detection.id);
         if (tagFieldPosition == null) {
-            return new Pose(0,0,0);        }
+            return new Pose(0, 0, 0);
+        }
 
-        double tagX   = (double) detection.ftcPose.x;
-        double tagY   = (double) detection.ftcPose.y;
+        double tagX = (double) detection.ftcPose.x;
+        double tagY = (double) detection.ftcPose.y;
         double tagYaw = (double) detection.ftcPose.yaw;
+        double correctionX = tagYaw;
 
 
         // Optional: adjust distance due to tilt (simple correction)
-        double tiltCorrection = (double) Math.cos(Math.toRadians(CAMERA_TILT_DEGREES));
-        tagX *= tiltCorrection;
-        tagY *= tiltCorrection;
+        double tiltCorrection = (double) Math.cos(Math.toRadians(tagYaw));
+        tagX *= Math.abs(tiltCorrection);
 
         double robotX_fromTag = -tagX - CAMERA_X_OFFSET;
         double robotY_fromTag = -tagY - CAMERA_Y_OFFSET;
@@ -493,11 +590,47 @@ public class GreenFN {
         double robotFieldX = tagFieldPosition.getX() + robotX_fromTag;
         double robotFieldY = tagFieldPosition.getY() + robotY_fromTag;
         double robotHeading = tagFieldPosition.getHeading() + tagYaw;
-        
+
         fromApriltag = new Pose(robotFieldX, robotFieldY, robotHeading);
 
         return fromApriltag;
     }
+
+    public static double getRPMreg(double range) {
+        return 0.0692362*range*range-3.38259*range+718.12462;
+    }
+
+    public static Pose convertToFieldPosition2(AprilTagDetection detection) {
+        if (detection == null) {
+            return new Pose(0, 0, 0);
+        }
+
+        Pose tagFieldPosition = getTagFieldPosition(detection.id);
+        if (tagFieldPosition == null) {
+            return new Pose(0, 0, 0);
+        }
+
+        double tagX = (double) detection.ftcPose.x;
+        double tagY = (double) detection.ftcPose.y;
+        double tagYaw = (double) detection.ftcPose.yaw;
+        double correctionX = tagYaw;
+
+
+        double x = detection.ftcPose.range * Math.sin(tagYaw);
+        double y = detection.ftcPose.range * Math.cos(tagYaw);
+
+
+//        Pose fromTag =
+
+        double tagHeading = tagFieldPosition.getHeading();
+
+//        double robotX = tagFieldPosition.getX() + x*Math.sin
+
+//        fromApriltag = new Pose(robotFieldX, robotFieldY, robotHeading);
+
+        return fromApriltag;
+    }
+
     // Call this in TeleOp when you want to toggle the heading lock
     public void toggleHeadingLock(Pose currentPose) {
         headingLockEnabled = !headingLockEnabled;
@@ -518,58 +651,47 @@ public class GreenFN {
     public boolean isHeadingLockEnabled() {
         return headingLockEnabled;
     }
+
     // --- AUTO-AIM USING APRILTAG ---
 // This method calculates a correction to make the robot face a specific AprilTag (e.g., the goal)
     // Returns the Pose of the visible goal tag (20 or 24), or null if none
-    public Pose getVisibleGoalPose() {
+    public AprilTagDetection getVisibleGoalPose() {
         List<AprilTagDetection> detections = aprilTag.getDetections();
         for (AprilTagDetection det : detections) {
             if (det.id == 20 || det.id == 24) {
-                return convertToFieldPosition(det);
+                return det;
             }
         }
         return null;
     }
 
-    // Returns a rotation correction power (radians -> scaled)
-    public double getAutoAimCorrection() {
-        Pose goalPose = getVisibleGoalPose(); // uses either tag 20 or 24
-        if (goalPose == null) return 0; // no tag visible
-
-        double robotHeading = currentPose.getHeading();
-        double targetHeading = Math.atan2(goalPose.getY() - currentPose.getY(),
-                goalPose.getX() - currentPose.getX());
-        double headingError = targetHeading - robotHeading;
-
-        // normalize to [-pi, pi]
-        headingError = Math.atan2(Math.sin(headingError), Math.cos(headingError));
-
-        // scale with a simple proportional controller
-        double kP = 1.0; // tune this
-        return headingError * kP;
+    public Pose getPoseFromApriltag() {
+        AprilTagDetection goal = getVisibleGoalPose();
+        if(goal==null) {
+            return new Pose(getPose().getX()+adjustedX, getPose().getY()+adjustedY, getPose().getHeading());
+        }
+        double range = goal.ftcPose.range*Math.cos(Math.toRadians(goal.ftcPose.pitch));
+        double headingThing = getPose().getHeading()+Math.toRadians(goal.ftcPose.bearing)+Math.toRadians(90);
+        double x = range*Math.cos(headingThing);
+        double y = range*Math.sin(headingThing);
+        double newX=0, newY=0;
+        double currentHeading = getPose().getHeading();
+        if(getPose().getHeading()>1.5) {
+            if (goal.id==24) {
+                newX = TAG_24.getX()+x;
+                newY = TAG_24.getY()+y;
+            }
+        }
+        else {
+            if(goal.id==20) {
+                newX = TAG_20_SHIFTED.getX()+x-CAMERA_X_OFFSET;
+                newY = TAG_20_SHIFTED.getY()+y-CAMERA_Y_OFFSET;
+            }
+        }
+        if(newX!=0) {
+            adjustedX = newX - getPose().getX();
+            adjustedY = newY - getPose().getX();
+        }
+        return new Pose(getPose().getX()+adjustedX, getPose().getY()+adjustedY, getPose().getHeading());
     }
-
-
-
-
 }
-
-/*public void loop() {
-  if(headingLock) {
-    double targetHeading = Math.toRadians(180);
-
-    double headingError = targetHeading - currentHeading;
-    headingError = Math.IEEEremainder(headingError, 2 * Math.PI);
-
-    if (Math.abs(headingError) < Math.toRadians(2)) {
-      headingCorrection = 0;
-    } else {
-      headingCorrection = headingPIDController.calculate(headingError);
-    }
-
-    follower.setTeleOpMovementVectors(-gamepad1.getLeftY(), gamepad1.getLeftX(), headingCorrection);
-
-  } else {
-    follower.setTeleOpMovementVectors(-gamepad1.getLeftY(), gamepad1.getLeftX(), gamepad1.getRightX());
-  }
-}*/

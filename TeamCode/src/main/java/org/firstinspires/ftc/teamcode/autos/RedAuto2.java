@@ -303,7 +303,7 @@ public class RedAuto2 extends LinearOpMode {
 
     public static Pose startPose = new Pose(144-15.0, 118.0, Math.toRadians(218));
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
-    public static Pose launchPose = new Pose(144-launchPoseX, launchPoseY, Math.toRadians(128));
+    public static Pose launchPose = new Pose(144-launchPoseX, launchPoseY, Math.toRadians(122));
     public static Pose aprilTagPose = BlueAuto.aprilTagPose.mirror().setHeading(Math.toRadians(200));
 
     public static Pose gotoFirstCtrl = mirrorNoHeading(BlueAuto.gotoFirstCtrl);
@@ -326,6 +326,7 @@ public class RedAuto2 extends LinearOpMode {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
         g = new GreenFN(hardwareMap);
+        GreenFN.minTimeBtwnShots = 0.7;
         g.loadStoppers();
         g.follower.setStartingPose(startPose);
 
@@ -339,7 +340,7 @@ public class RedAuto2 extends LinearOpMode {
                 new Path(
                         new BezierLine(aprilTagPose, launchPose)
                 );
-        scorePreload.setLinearHeadingInterpolation(aprilTagPose.getHeading(), launchPose.getHeading());
+        scorePreload.setLinearHeadingInterpolation(aprilTagPose.getHeading(), launchPose.getHeading()+Math.toRadians(3));
 
         PathChain aprilTagPreload = new PathChain(
                 aprilTag,
@@ -413,13 +414,13 @@ public class RedAuto2 extends LinearOpMode {
                 new Path(
                         new BezierLine(thirdIntakePose, launchPose)
                 );
-        scoreThird.setLinearHeadingInterpolation(Math.toRadians(0), launchPose.getHeading());
+        scoreThird.setLinearHeadingInterpolation(Math.toRadians(0), launchPose.getHeading()+Math.toRadians(1.5));
 
         Path park =
                 new Path(
                         new BezierLine(launchPose, parkPose)
                 );
-        park.setConstantHeadingInterpolation(launchPose.getHeading());
+        park.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(183));
 
 
         GreenFN.detect = false;
@@ -433,20 +434,21 @@ public class RedAuto2 extends LinearOpMode {
         while(!isStarted()) {
             g.update();
         }
+
         if(isStopRequested()) return;
         Actions.runBlocking(
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
-                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-6),
+                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-12),
                                 g.loadAction(),
                                 follow(aprilTag),
                                 new ParallelAction(
                                         new SleepAction(0.5),
                                         g.loadAction(),
                                         new SequentialAction(
-                                                new SleepAction(0.2),
-                                                g.setIntakeRPM((int) GreenFN.intakeRPM+250)
+                                                new SleepAction(0.2)
+//                                                g.setIntakeRPM((int) GreenFN.intakeRPM+250)
                                         )
                                 ),
                                 g.loadAction(),
@@ -455,14 +457,17 @@ public class RedAuto2 extends LinearOpMode {
                                 follow(scorePreload),
                                 g.loadAction(),
                                 new WaitToDone(),
-//                                new SleepAction(0.5),
+                                g.setIntakeRPM(GreenFN.intakeRPM + 250),
+                                new SleepAction(1),
                                 shootInOrder( 0),
                                 new SleepAction(GreenFN.minTimeBtwnShots *3),
                                 g.loadAction(),
 
                                 followUntilDone(gotoFirst),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+250),
+                                new InstantAction(() -> g.follower.setMaxPower(0.7)),
                                 followUntilDone(intakeFirst),
+                                new InstantAction(() -> g.follower.setMaxPower(1)),
                                 new SleepAction(0.2),
                                 follow(scoreFirst),
                                 new WaitToDone(),
@@ -472,7 +477,9 @@ public class RedAuto2 extends LinearOpMode {
                                 g.loadAction(),
                                 followUntilDone(gotoSecond),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+250),
+                                new InstantAction(() -> g.follower.setMaxPower(0.7)),
                                 followUntilDone(intakeSecond),
+                                new InstantAction(() -> g.follower.setMaxPower(1)),
                                 new SleepAction(0.2),
                                 follow(scoreSecond),
                                 new WaitToDone(),
@@ -482,7 +489,9 @@ public class RedAuto2 extends LinearOpMode {
                                 g.loadAction(),
                                 followUntilDone(gotoThird),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+250),
+                                new InstantAction(() -> g.follower.setMaxPower(0.7)),
                                 followUntilDone(intakeThird),
+                                new InstantAction(() -> g.follower.setMaxPower(1)),
                                 new SleepAction(0.2),
                                 follow(scoreThird),
                                 new WaitToDone(),

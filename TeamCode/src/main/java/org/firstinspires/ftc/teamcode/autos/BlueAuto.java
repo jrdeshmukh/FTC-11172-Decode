@@ -294,7 +294,7 @@ public class BlueAuto extends LinearOpMode {
 //    apriltagy: 0.0
 //    heading: : -2.627474546432495
 
-    public static double launchPoseX = 57, launchPoseY = 94, launchPoseHeading = Math.toRadians(234);
+    public static double launchPoseX = 57, launchPoseY = 94, launchPoseHeading = Math.toRadians(235);
 //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
     public static Pose launchPose = new Pose(launchPoseX, launchPoseY, launchPoseHeading);
 
@@ -303,16 +303,16 @@ public class BlueAuto extends LinearOpMode {
 
     // Intermediate poses
     public static Pose gotoFirstCtrl = new Pose(49.360, 98.516);
-    public static Pose firstIntakePose = new Pose(21.500, 100.0);
+    public static Pose firstIntakePose = new Pose(22.500, 100.0);
     public static Pose firstIntakeEnd = new Pose(21.50, 89.835);
 
-    public static Pose secondGotoPose = new Pose(21.30, 75.773);
-    public static Pose secondIntakePose = new Pose(21.30, 65.489);
+    public static Pose secondGotoPose = new Pose(23.0, 75.773);
+    public static Pose secondIntakePose = new Pose(21.50, 65.489);
 
-    public static Pose thirdGotoPose = new Pose(22.0, 47.937);
-    public static Pose thirdIntakePose = new Pose(22.000, 41.332);
+    public static Pose thirdGotoPose = new Pose(22, 48.937);
+    public static Pose thirdIntakePose = new Pose(21.800, 41.332);
 
-    public static Pose parkPose = new Pose(launchPoseX, 105);
+    public static Pose parkPose = new Pose(launchPoseX-8, 115);
 
     @Override
     public void runOpMode() {
@@ -324,6 +324,8 @@ public class BlueAuto extends LinearOpMode {
         g = new GreenFN(hardwareMap);
         g.loadStoppers();
         g.follower.setStartingPose(startPose);
+        GreenFN.minTimeBtwnShots = 0.7;
+
 
         Path aprilTag =
                 new Path(
@@ -415,7 +417,7 @@ public class BlueAuto extends LinearOpMode {
                 new Path(
                         new BezierLine(launchPose, parkPose)
                 );
-        park.setTangentHeadingInterpolation();
+        park.setLinearHeadingInterpolation(launchPose.getHeading(), 0);
 
 
 
@@ -434,14 +436,13 @@ public class BlueAuto extends LinearOpMode {
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
-                                g.setShooterRPM((int) GreenFN.shooterAutoRPM),
+                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-7),
                                 g.loadAction(),
                                 follow(aprilTag),
                                 new ParallelAction(
-                                        new SleepAction(0.5),
+                                        new SleepAction(1),
                                         g.loadAction(),
                                         new SequentialAction(
-                                                g.setIntakeRPM((int) GreenFN.intakeRPM+250)
                                         )
                                 ),
                                 g.loadAction(),
@@ -449,15 +450,18 @@ public class BlueAuto extends LinearOpMode {
                                 new InstantAction(() -> GreenFN.detect = true),
                                 followUntilDone(scorePreload),
                                 g.loadAction(),
-//                                new SleepAction(0.5),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM+250),
+                                new SleepAction(1),
                                 shootInOrder( 0),
                                 new SleepAction(GreenFN.minTimeBtwnShots *3),
                                 g.loadAction(),
 
                                 followUntilDone(gotoFirst),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+250),
+                                new InstantAction(() -> g.follower.setMaxPower(0.7)),
                                 followUntilDone(intakeFirst),
                                 new SleepAction(0.2),
+                                new InstantAction(() -> g.follower.setMaxPower(1)),
                                 followUntilDone(scoreFirst),
 //                                new SleepAction(0.5),
                                 shootInOrder(1),
@@ -465,8 +469,10 @@ public class BlueAuto extends LinearOpMode {
                                 g.loadAction(),
                                 followUntilDone(gotoSecond),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+250),
+                                new InstantAction(() -> g.follower.setMaxPower(0.7)),
                                 followUntilDone(intakeSecond),
                                 new SleepAction(0.2),
+                                new InstantAction(() -> g.follower.setMaxPower(1)),
                                 followUntilDone(scoreSecond),
 //                                new SleepAction(0.5),
                                 shootInOrder(2),
@@ -474,8 +480,10 @@ public class BlueAuto extends LinearOpMode {
                                 g.loadAction(),
                                 followUntilDone(gotoThird),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+250),
+                                new InstantAction(() -> g.follower.setMaxPower(0.7)),
                                 followUntilDone(intakeThird),
                                 new SleepAction(0.2),
+                                new InstantAction(() -> g.follower.setMaxPower(1)),
                                 followUntilDone(scoreThird),
 //                                new SleepAction(0.5),
                                 shootInOrder(3),
