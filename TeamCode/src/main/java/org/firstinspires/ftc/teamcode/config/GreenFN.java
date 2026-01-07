@@ -57,7 +57,7 @@ public class GreenFN {
     public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
 
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.002, intakekI = 0, intakekD = 0.00, shooterkP = 0.05, shooterkI = 0.1, shooterkD = 0.0001, intakeKF = 0.0009, shooterkF = 0.00024;
+    public static double intakekP = 0.002, intakekI = 0, intakekD = 0.00, shooterkP = 0.02, shooterkI = 0.1, shooterkD = 0.0001, intakeKF = 0.0009, shooterkF = 0.00024;
     public DcMotorEx shooter1, shooter2, intake;
 //    public NormalizedColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;

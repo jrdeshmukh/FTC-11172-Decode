@@ -144,11 +144,11 @@ public class WetBall extends OpMode {
 
         if(gamepad1.left_trigger>0.05F) {
             GreenFN.intakeTarget=GreenFN.intakeRPM;
-            g.toUpdateSlots = true;
+//            g.toUpdateSlots = true;
         }
         else {
             GreenFN.intakeTarget = 0;
-            g.toUpdateSlots = false;
+//            g.toUpdateSlots = false;
         }
         if(g.toUpdateSlots) {
             ctr = 0;
@@ -266,10 +266,8 @@ public class WetBall extends OpMode {
             );
         }
 
-        if(gp2.a()) {
-            if(goal!= null) {
-                GreenFN.shooterTarget = GreenFN.getRPMreg(goal.ftcPose.range);
-            }
+        if(gamepad2.a) {
+            GreenFN.shooterTarget = GreenFN.getRPMreg(g.getPose().distanceFrom(goalPose));
         }
 
 
@@ -413,6 +411,8 @@ public class WetBall extends OpMode {
         telemetry.addData("side: ", side);
         telemetry.addData("range" , goal==null?null:(goal.ftcPose.range));
         telemetry.addData("pitch: ", goal==null?null:goal.ftcPose.pitch);
+        telemetry.addData("pose range: ", g.getPose().distanceFrom(goalPose));
+        telemetry.addData("rpm reg: ", GreenFN.getRPMreg( g.getPose().distanceFrom(goalPose)));
         telemetry.addData("range adjustment: ", goal==null?null: goal.ftcPose.range*Math.cos(Math.toRadians(goal.ftcPose.pitch)));
         telemetry.addData("adjustedx: ", g.getPoseFromApriltag().getX());
         telemetry.addData("adjustedy: ", g.getPoseFromApriltag().getY());
