@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode.autos;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
 
+import android.graphics.Color;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -25,6 +27,10 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.config.GreenFN;
+import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
+import org.firstinspires.ftc.vision.opencv.ColorRange;
+import org.firstinspires.ftc.vision.opencv.ImageRegion;
+import org.opencv.core.RotatedRect;
 
 import java.util.List;
 
@@ -34,7 +40,6 @@ import java.util.List;
 public class BlueAuto extends LinearOpMode {
 
     GreenFN g;
-
     public class FollowerUpdate implements Action {
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {

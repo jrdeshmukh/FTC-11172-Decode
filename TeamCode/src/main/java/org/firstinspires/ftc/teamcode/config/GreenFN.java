@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.config;
 
+import android.graphics.Color;
+import android.util.Size;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.config.Config;
@@ -25,6 +28,7 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -32,6 +36,14 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
+import org.firstinspires.ftc.vision.opencv.ColorRange;
+import org.firstinspires.ftc.vision.opencv.ColorSpace;
+import org.firstinspires.ftc.vision.opencv.ImageRegion;
+import org.opencv.core.RotatedRect;
+import org.opencv.core.Scalar;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,10 +55,47 @@ import java.util.List;
 public class GreenFN {
     public static double shooterCloseRPM = 645;
     public static double shooterAutoRPM = 668;
+    private static final Logger log = LoggerFactory.getLogger(GreenFN.class);
     public static double intakeRPM = 600;
     public static double closeHoodAngle = 80;
+    WebcamName webcam1;
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
+    static Size cameraResolution = new Size(640, 480);
+    private List<AprilTagDetection> detectedTags = new ArrayList<>();
+    private Telemetry telemetry;
+    public ColorBlobLocatorProcessor colorLocator = new ColorBlobLocatorProcessor.Builder()
+            .setTargetColorRange(ColorRange.ARTIFACT_PURPLE)// Use a predefined color match
+            .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
+            .setRoi(ImageRegion.asUnityCenterCoordinates(-0.75, 0.75, 0.75, -0.75))
+            .setDrawContours(true)   // Show contours on the Stream Preview
+            //.setBoxFitColor(0)       // Disable the drawing of rectangles
+            //.setEnclosingCircleColor(0)
+            .setCircleFitColor(Color.rgb(255, 255, 0)) // Draw a circle
+            .setBlurSize(3)          // Smooth the transitions between different colors in image
+
+            // the following options have been added to fill in perimeter holes.
+            .setDilateSize(10)       // Expand blobs to fill any divots on the edges
+            .setErodeSize(10)        // Shrink blobs back to original size
+            .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.OPENING)
+
+            .build();
+
+    public ColorBlobLocatorProcessor colorLocator2 = new ColorBlobLocatorProcessor.Builder()
+            .setTargetColorRange(ColorRange.ARTIFACT_GREEN)// Use a predefined color match
+            .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
+            .setRoi(ImageRegion.asUnityCenterCoordinates(-0.75, 0.75, 0.75, -0.75))
+            .setDrawContours(true)   // Show contours on the Stream Preview
+            //.setBoxFitColor(0)       // Disable the drawing of rectangles
+            //.setEnclosingCircleColor(0)
+            .setCircleFitColor(Color.rgb(0, 255, 255)) // Draw a circle
+            .setBlurSize(3)          // Smooth the transitions between different colors in image
+            // the following options have been added to fill in perimeter holes.
+            .setDilateSize(10)       // Expand blobs to fill any divots on the edges
+            .setErodeSize(10)        // Shrink blobs back to original size
+            .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.OPENING)
+
+            .build();
 
     enum Colors {
         PURPLE,
@@ -55,7 +104,6 @@ public class GreenFN {
     }
 
     public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
-
     PIDController shooterController1, shooterController2, intakeController;
     public static double intakekP = 0.002, intakekI = 0, intakekD = 0.00, shooterkP = 0.02, shooterkI = 0.1, shooterkD = 0.0001, intakeKF = 0.0009, shooterkF = 0.00024;
     public DcMotorEx shooter1, shooter2, intake;
@@ -122,7 +170,6 @@ public class GreenFN {
     }
 
     public static Motifs currentMotif = null;
-
     public int counter = 0;
     public int colorCounter = 0;
     public static boolean detect = true;
@@ -270,13 +317,23 @@ public class GreenFN {
         // Create the AprilTag processor the easy way.
         follower = Constants.createFollower(map);
         // Initialize camera (webcam example)
-        aprilTag = AprilTagProcessor.easyCreateWithDefaults();
-        visionPortal = VisionPortal.easyCreateWithDefaults(
-                map.get(WebcamName.class, "Webcam 1"),
-                aprilTag
-        );
-        visionPortal.resumeStreaming();
-        visionPortal.resumeLiveView();
+        webcam1 = map.get(WebcamName.class, "Webcam 1");
+        aprilTag = new AprilTagProcessor.Builder()
+                .setDrawTagID(true)
+                .setDrawTagOutline(true)
+                .setDrawAxes(true)
+                .setDrawCubeProjection(true)
+                .setOutputUnits(DistanceUnit.CM, AngleUnit.RADIANS)
+                .build();
+        colorLocator.addFilter(new ColorBlobLocatorProcessor.BlobFilter(
+                ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, 1000, 150000));
+        colorLocator2.addFilter(new ColorBlobLocatorProcessor.BlobFilter(
+                ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, 1000, 150000));
+        visionPortal = new VisionPortal.Builder()
+            .setCamera(webcam1)
+            .setCameraResolution(cameraResolution)
+            .addProcessors(aprilTag, colorLocator, colorLocator2)
+            .build();
     }
 
     /**
@@ -284,16 +341,16 @@ public class GreenFN {
      */
 
     public void update() {
-
-        updatePIDs();
-        currentPose = follower.getPose();
-        angvel = follower.poseTracker.getAngularVelocity();
-
-        follower.update();
-
-        iv = intake.getVelocity(AngleUnit.DEGREES);
-        s1v = shooter1.getVelocity(AngleUnit.DEGREES);
-        s2v = shooter2.getVelocity(AngleUnit.DEGREES);
+//
+//        updatePIDs();
+//        currentPose = follower.getPose();
+//        angvel = follower.poseTracker.getAngularVelocity();
+//
+//        follower.update();
+//
+//        iv = intake.getVelocity(AngleUnit.DEGREES);
+//        s1v = shooter1.getVelocity(AngleUnit.DEGREES);
+//        s2v = shooter2.getVelocity(AngleUnit.DEGREES);
 //        List<AprilTagDetection> detections = aprilTag.getDetections();
 //        if (detections.size() > 0) {
 //            AprilTagDetection detection = detections.get(0); // pick the first detected tag
@@ -305,60 +362,64 @@ public class GreenFN {
 //        }
 
 
-        if(counter%20==0) {
-            stop1pos = stopper1.getPosition();
-            stop2pos = stopper2.getPosition();
-            stop3pos = stopper3.getPosition();
-            stopper1.setPosition(stop1pos);
-            stopper2.setPosition(stop2pos);
-            stopper3.setPosition(stop3pos);
-            counter = 0;
-        }
-        counter++;
-//        loadStoppers();
+//        if(counter%20==0) {
+//            stop1pos = stopper1.getPosition();
+//            stop2pos = stopper2.getPosition();
+//            stop3pos = stopper3.getPosition();
+//            stopper1.setPosition(stop1pos);
+//            stopper2.setPosition(stop2pos);
+//            stopper3.setPosition(stop3pos);
+//            counter = 0;
+//        }
+//        counter++;
+////        loadStoppers();
+//
+//        List<Servo> toRemove = new ArrayList<>();
+//        for (Servo s : shooterQueue) {
+//            if (shotTimer.getElapsedTimeSeconds() - recentShotTime > minTimeBtwnShots) {
+//                toRemove.add(s);
+//                if (s.equals(stopper1)) {
+//                    recentServoShot = 1;
+//                    stopper1.setPosition(stopper1Shoot);
+//                }
+//                if (s.equals(stopper2)) {
+//                    recentServoShot = 2;
+//                    stopper2.setPosition(stopper2Shoot);
+//                }
+//                if (s.equals(stopper3)) {
+//                    recentServoShot = 3;
+//                    stopper3.setPosition(stopper3Shoot);
+//                }
+//                recentShotTime = shotTimer.getElapsedTimeSeconds();
+//            }
+//        }
+//        shooterQueue.removeAll(toRemove);
+//
+//
+//        if (!loaded) {
+//            modifiedShooterRPM = 0;
+//        }
+//        if (loaded) {
+//            modifiedShooterRPM = shooterTarget;
+//        }
+//
+//        if (currentMotif == null && detect) {
+//            updateAprilTagDetection();
+//
+//        }
+//        colorSensorUpdated = false;
+//        if(toUpdateColorSensor) {
+//            updateColorSensor();
+//        }
+//        slotsUpdated = false;
+//        if(toUpdateSlots) {
+//            updateSlotDetection();
+//        }
 
-        List<Servo> toRemove = new ArrayList<>();
-        for (Servo s : shooterQueue) {
-            if (shotTimer.getElapsedTimeSeconds() - recentShotTime > minTimeBtwnShots) {
-                toRemove.add(s);
-                if (s.equals(stopper1)) {
-                    recentServoShot = 1;
-                    stopper1.setPosition(stopper1Shoot);
-                }
-                if (s.equals(stopper2)) {
-                    recentServoShot = 2;
-                    stopper2.setPosition(stopper2Shoot);
-                }
-                if (s.equals(stopper3)) {
-                    recentServoShot = 3;
-                    stopper3.setPosition(stopper3Shoot);
-                }
-                recentShotTime = shotTimer.getElapsedTimeSeconds();
-            }
-        }
-        shooterQueue.removeAll(toRemove);
-
-
-        if (!loaded) {
-            modifiedShooterRPM = 0;
-        }
-        if (loaded) {
-            modifiedShooterRPM = shooterTarget;
-        }
-
-        if (currentMotif == null && detect) {
-            updateAprilTagDetection();
-
-        }
-        colorSensorUpdated = false;
-        if(toUpdateColorSensor) {
-            updateColorSensor();
-        }
-        slotsUpdated = false;
-        if(toUpdateSlots) {
-            updateSlotDetection();
-        }
-    }
+        detectedTags = aprilTag.getDetections();
+        colorLocator.getBlobs();
+        colorLocator2.getBlobs();
+   }
 
     public Pose getPose() {
         return currentPose;
@@ -533,6 +594,39 @@ public class GreenFN {
                     currentMotif = Motifs.PPG;
                     break;
             }
+        }
+    }
+    public List<AprilTagDetection> getDetectedTags(){
+        return detectedTags;
+    }
+
+    public void displayDetectionTelemetry(AprilTagDetection detectedId){
+        if(detectedId == null) {
+            return;
+        }
+        if (detectedId.metadata != null) {
+            telemetry.addLine(String.format("\n==== (ID %d) %s", detectedId.id, detectedId.metadata.name));
+            telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detectedId.ftcPose.x, detectedId.ftcPose.y, detectedId.ftcPose.z));
+            telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detectedId.ftcPose.pitch, detectedId.ftcPose.roll, detectedId.ftcPose.yaw));
+            telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detectedId.ftcPose.range, detectedId.ftcPose.bearing, detectedId.ftcPose.elevation));
+            telemetry.addData("Detected Tag:", detectedId.id);
+        } else {
+            telemetry.addLine(String.format("\n==== (ID %d) Unknown", detectedId.id));
+            telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detectedId.center.x, detectedId.center.y));
+        }
+    }
+
+    public AprilTagDetection getTagBySpecificId(int id){
+        for (AprilTagDetection detection: detectedTags) {
+            if (detection.id == id){
+                return detection;
+            }
+        }
+        return null;
+    }
+    public void stopAprilTag(){
+        if(visionPortal != null){
+            visionPortal.close();
         }
     }
 
