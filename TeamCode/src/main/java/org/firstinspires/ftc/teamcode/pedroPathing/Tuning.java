@@ -844,6 +844,9 @@ class HeadingTuner extends OpMode {
         }
 
         telemetryM.debug("Turn the robot manually to test the Heading PIDF(s).");
+        telemetry.addData("Heading: ", follower.getPose().getHeading());
+        telemetry.addData("heading power: ", follower.getHeadingVector().getMagnitude());
+        telemetry.update();
         telemetryM.update(telemetry);
     }
 }

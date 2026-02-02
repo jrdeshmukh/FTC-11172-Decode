@@ -23,6 +23,7 @@ import com.pedropathing.paths.PathBuilder;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
@@ -37,6 +38,7 @@ import java.util.List;
 
 @Autonomous()
 @Config()
+@Disabled()
 public class BlueAuto extends LinearOpMode {
 
     GreenFN g;
@@ -47,6 +49,7 @@ public class BlueAuto extends LinearOpMode {
             telemetry.addData("x: ", g.getPose().getX());
             telemetry.addData("y: ", g.getPose().getY());
             telemetry.addData("heading: ", Math.toDegrees(g.getPose().getHeading()));
+            telemetry.addData("heading power: ", g.follower.getHeadingVector());
             telemetry.addData("recentServoShot: ", g.recentServoShot);
             telemetry.addData("shooterPower: ", g.flywheel1Power);
             telemetry.addData("shooterTarget: ", g.shooterTarget);
@@ -299,7 +302,7 @@ public class BlueAuto extends LinearOpMode {
 //    apriltagy: 0.0
 //    heading: : -2.627474546432495
 
-    public static double launchPoseX = 57, launchPoseY = 94, launchPoseHeading = Math.toRadians(235);
+    public static double launchPoseX = 57, launchPoseY = 105, launchPoseHeading = Math.toRadians(246);
 //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
     public static Pose launchPose = new Pose(launchPoseX, launchPoseY, launchPoseHeading);
 
@@ -342,7 +345,7 @@ public class BlueAuto extends LinearOpMode {
                 new Path(
                         new BezierLine(aprilTagPose, launchPose)
                 );
-        scorePreload.setLinearHeadingInterpolation(aprilTagPose.getHeading(), launchPose.getHeading());
+        scorePreload.setLinearHeadingInterpolation(aprilTagPose.getHeading(), launchPose.getHeading()-Math.toRadians(5));
 
         PathChain aprilTagPreload = new PathChain(
                 aprilTag,
@@ -371,6 +374,7 @@ public class BlueAuto extends LinearOpMode {
                         new BezierLine(firstIntakeEnd, launchPose)
                 );
         scoreFirst.setLinearHeadingInterpolation(Math.toRadians(0), launchPose.getHeading());
+
 
         Path gotoSecond =
                 new Path(
@@ -441,7 +445,7 @@ public class BlueAuto extends LinearOpMode {
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
-                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-7),
+                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-14),
                                 g.loadAction(),
                                 follow(aprilTag),
                                 new ParallelAction(

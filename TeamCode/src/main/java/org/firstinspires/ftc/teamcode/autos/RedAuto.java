@@ -30,7 +30,7 @@ import java.util.List;
 
 @Autonomous()
 @Config()
-@Disabled
+@Disabled()
 public class RedAuto extends LinearOpMode {
 
     GreenFN g;

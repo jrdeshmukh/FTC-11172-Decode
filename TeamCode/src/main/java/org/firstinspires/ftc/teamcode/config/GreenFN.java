@@ -103,9 +103,17 @@ public class GreenFN {
         NONE
     }
 
+    public enum Sides {
+        NONE,
+        RED,
+        BLUE
+    }
+
+    public static Sides side = Sides.NONE;
+
     public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.002, intakekI = 0, intakekD = 0.00, shooterkP = 0.02, shooterkI = 0.1, shooterkD = 0.0001, intakeKF = 0.0009, shooterkF = 0.00024;
+    public static double intakekP = 0.002, intakekI = 0, intakekD = 0.00, shooterkP = 0.025, shooterkI = 0.0, shooterkD = 0.0001, intakeKF = 0.0009, shooterkF = 0.00024;
     public DcMotorEx shooter1, shooter2, intake;
 //    public NormalizedColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
@@ -316,15 +324,17 @@ public class GreenFN {
 //        lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
         // Create the AprilTag processor the easy way.
         follower = Constants.createFollower(map);
+
+
         // Initialize camera (webcam example)
         webcam1 = map.get(WebcamName.class, "Webcam 1");
-        aprilTag = new AprilTagProcessor.Builder()
-                .setDrawTagID(true)
-                .setDrawTagOutline(true)
-                .setDrawAxes(true)
-                .setDrawCubeProjection(true)
-                .setOutputUnits(DistanceUnit.CM, AngleUnit.RADIANS)
-                .build();
+        aprilTag = AprilTagProcessor.easyCreateWithDefaults();
+//        visionPortal = VisionPortal.easyCreateWithDefaults(
+//                map.get(WebcamName.class, "Webcam 1"),
+//                aprilTag
+//        );
+
+
         colorLocator.addFilter(new ColorBlobLocatorProcessor.BlobFilter(
                 ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, 1000, 150000));
         colorLocator2.addFilter(new ColorBlobLocatorProcessor.BlobFilter(
@@ -334,6 +344,8 @@ public class GreenFN {
             .setCameraResolution(cameraResolution)
             .addProcessors(aprilTag, colorLocator, colorLocator2)
             .build();
+        visionPortal.resumeStreaming();
+        visionPortal.resumeLiveView();
     }
 
     /**
@@ -341,84 +353,84 @@ public class GreenFN {
      */
 
     public void update() {
-//
-//        updatePIDs();
-//        currentPose = follower.getPose();
-//        angvel = follower.poseTracker.getAngularVelocity();
-//
-//        follower.update();
-//
-//        iv = intake.getVelocity(AngleUnit.DEGREES);
-//        s1v = shooter1.getVelocity(AngleUnit.DEGREES);
-//        s2v = shooter2.getVelocity(AngleUnit.DEGREES);
-//        List<AprilTagDetection> detections = aprilTag.getDetections();
-//        if (detections.size() > 0) {
-//            AprilTagDetection detection = detections.get(0); // pick the first detected tag
-//
-//            // Convert to field coordinates
-//            if(detection.id == 20 || detection.id == 24) {
-//                fromApriltag = convertToFieldPosition(detection);
-//            }
-//        }
+
+        updatePIDs();
+        currentPose = follower.getPose();
+        angvel = follower.poseTracker.getAngularVelocity();
+
+        follower.update();
+
+        iv = intake.getVelocity(AngleUnit.DEGREES);
+        s1v = shooter1.getVelocity(AngleUnit.DEGREES);
+        s2v = shooter2.getVelocity(AngleUnit.DEGREES);
+        List<AprilTagDetection> detections = aprilTag.getDetections();
+        if (detections.size() > 0) {
+            AprilTagDetection detection = detections.get(0); // pick the first detected tag
+
+            // Convert to field coordinates
+            if(detection.id == 20 || detection.id == 24) {
+                fromApriltag = convertToFieldPosition(detection);
+            }
+        }
 
 
-//        if(counter%20==0) {
-//            stop1pos = stopper1.getPosition();
-//            stop2pos = stopper2.getPosition();
-//            stop3pos = stopper3.getPosition();
-//            stopper1.setPosition(stop1pos);
-//            stopper2.setPosition(stop2pos);
-//            stopper3.setPosition(stop3pos);
-//            counter = 0;
-//        }
-//        counter++;
-////        loadStoppers();
-//
-//        List<Servo> toRemove = new ArrayList<>();
-//        for (Servo s : shooterQueue) {
-//            if (shotTimer.getElapsedTimeSeconds() - recentShotTime > minTimeBtwnShots) {
-//                toRemove.add(s);
-//                if (s.equals(stopper1)) {
-//                    recentServoShot = 1;
-//                    stopper1.setPosition(stopper1Shoot);
-//                }
-//                if (s.equals(stopper2)) {
-//                    recentServoShot = 2;
-//                    stopper2.setPosition(stopper2Shoot);
-//                }
-//                if (s.equals(stopper3)) {
-//                    recentServoShot = 3;
-//                    stopper3.setPosition(stopper3Shoot);
-//                }
-//                recentShotTime = shotTimer.getElapsedTimeSeconds();
-//            }
-//        }
-//        shooterQueue.removeAll(toRemove);
-//
-//
-//        if (!loaded) {
-//            modifiedShooterRPM = 0;
-//        }
-//        if (loaded) {
-//            modifiedShooterRPM = shooterTarget;
-//        }
-//
-//        if (currentMotif == null && detect) {
-//            updateAprilTagDetection();
-//
-//        }
-//        colorSensorUpdated = false;
-//        if(toUpdateColorSensor) {
-//            updateColorSensor();
-//        }
-//        slotsUpdated = false;
-//        if(toUpdateSlots) {
-//            updateSlotDetection();
-//        }
+        if(counter%20==0) {
+            stop1pos = stopper1.getPosition();
+            stop2pos = stopper2.getPosition();
+            stop3pos = stopper3.getPosition();
+            stopper1.setPosition(stop1pos);
+            stopper2.setPosition(stop2pos);
+            stopper3.setPosition(stop3pos);
+            counter = 0;
+        }
+        counter++;
+//        loadStoppers();
 
-        detectedTags = aprilTag.getDetections();
-        colorLocator.getBlobs();
-        colorLocator2.getBlobs();
+        List<Servo> toRemove = new ArrayList<>();
+        for (Servo s : shooterQueue) {
+            if (shotTimer.getElapsedTimeSeconds() - recentShotTime > minTimeBtwnShots) {
+                toRemove.add(s);
+                if (s.equals(stopper1)) {
+                    recentServoShot = 1;
+                    stopper1.setPosition(stopper1Shoot);
+                }
+                if (s.equals(stopper2)) {
+                    recentServoShot = 2;
+                    stopper2.setPosition(stopper2Shoot);
+                }
+                if (s.equals(stopper3)) {
+                    recentServoShot = 3;
+                    stopper3.setPosition(stopper3Shoot);
+                }
+                recentShotTime = shotTimer.getElapsedTimeSeconds();
+            }
+        }
+        shooterQueue.removeAll(toRemove);
+
+
+        if (!loaded) {
+            modifiedShooterRPM = 0;
+        }
+        if (loaded) {
+            modifiedShooterRPM = shooterTarget;
+        }
+
+        if (currentMotif == null && detect) {
+            updateAprilTagDetection();
+
+        }
+        colorSensorUpdated = false;
+        if(toUpdateColorSensor) {
+            updateColorSensor();
+        }
+        slotsUpdated = false;
+        if(toUpdateSlots) {
+            updateSlotDetection();
+        }
+//
+//        detectedTags = aprilTag.getDetections();
+//        colorLocator.getBlobs();
+//        colorLocator2.getBlobs();
    }
 
     public Pose getPose() {

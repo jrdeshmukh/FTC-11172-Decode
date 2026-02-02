@@ -25,6 +25,7 @@ import com.pedropathing.paths.PathBuilder;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
@@ -35,6 +36,7 @@ import java.util.List;
 
 @Autonomous()
 @Config()
+@Disabled()
 public class RedAuto2 extends LinearOpMode {
 
     GreenFN g;
@@ -303,7 +305,7 @@ public class RedAuto2 extends LinearOpMode {
 
     public static Pose startPose = new Pose(144-15.0, 118.0, Math.toRadians(218));
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
-    public static Pose launchPose = new Pose(144-launchPoseX, launchPoseY, Math.toRadians(122));
+    public static Pose launchPose = new Pose(144-launchPoseX, launchPoseY, Math.toRadians(110));
     public static Pose aprilTagPose = BlueAuto.aprilTagPose.mirror().setHeading(Math.toRadians(200));
 
     public static Pose gotoFirstCtrl = mirrorNoHeading(BlueAuto.gotoFirstCtrl);
@@ -340,7 +342,7 @@ public class RedAuto2 extends LinearOpMode {
                 new Path(
                         new BezierLine(aprilTagPose, launchPose)
                 );
-        scorePreload.setLinearHeadingInterpolation(aprilTagPose.getHeading(), launchPose.getHeading()+Math.toRadians(3));
+        scorePreload.setLinearHeadingInterpolation(aprilTagPose.getHeading(), launchPose.getHeading()+Math.toRadians(11));
 
         PathChain aprilTagPreload = new PathChain(
                 aprilTag,
@@ -440,7 +442,7 @@ public class RedAuto2 extends LinearOpMode {
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
-                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-12),
+                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-21),
                                 g.loadAction(),
                                 follow(aprilTag),
                                 new ParallelAction(

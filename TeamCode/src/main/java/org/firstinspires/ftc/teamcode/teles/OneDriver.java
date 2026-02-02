@@ -20,11 +20,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.autos.BlueAuto;
 import org.firstinspires.ftc.teamcode.config.BBG;
+import org.firstinspires.ftc.teamcode.config.FirstBoolean;
 import org.firstinspires.ftc.teamcode.config.GreenFN;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 import com.pedropathing.control.PIDFController;
-
+import com.qualcomm.robotcore.hardware.Gamepad;
 
 
 import java.util.ArrayList;
@@ -39,31 +41,93 @@ public class OneDriver extends OpMode {
     BBG gp1, gp2;
     boolean autoDriving = false;
     boolean headingLock = false;
+    boolean targetHeading = false;
+    boolean inZone = false;
+    double autoRPMtol = 36;
     double headingError = 0;
     double lastHeading;
+    boolean balls = false;
     List<Action> runningActions = new ArrayList<>();
-    Pose startPose = new Pose(0,0,Math.toRadians(135));
+    Gamepad.RumbleEffect balls2 = new Gamepad.RumbleEffect.Builder().addStep(1, 1, 100).build();
+    Gamepad.RumbleEffect balls3 = new Gamepad.RumbleEffect.Builder().addStep(1, 1, 200).addStep(0,0,100).addStep(1,1,200).addStep(0,0,100).addStep(1,1,200).build();
+    Pose startPose = new Pose(0,0,0);
     Pose launchPose = new Pose(), farPose = new Pose();
     Pose intakePose = new Pose();
     public static PIDFController headingPIDF;
     Timer loopTimer;
     public static double headingLockTolerance = 0.007;
-    public static double hp = 1, hi = 0, hd=0.08, hf=0.01;
+    public static double hp = 0.8, hi = 0, hd=0.09, hf=0.01;
     double lastLoopTime;
+    Pose goalPose = new Pose(0,0,0);
+    int ctr = 0;
+    enum Side {
+        RED,
+        BLUE
+    }
+    Side side = Side.BLUE;
+    FirstBoolean ballsFull = new FirstBoolean();
+    FirstBoolean balls3better = new FirstBoolean();
+    AprilTagDetection goal;
+    boolean isBalls3 = false;
+    double headingOffset = 0;
+    double newX, newY;
     @Override
     public void init() {
+        if(GreenFN.side== GreenFN.Sides.BLUE) {
+//            g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
+            goalPose = new Pose(133, 9.5);
+            startPose = new Pose(99-8.58, 45-16.932, Math.toRadians(0));
+//            gp1.rumble(1000);
+//            gp2.rumble(1000);
+        }
+        else if (GreenFN.side == GreenFN.Sides.RED) {
+//            g.follower.setPose(new Pose(99.5, 101.0, g.getPose().getHeading()));
+            startPose = new Pose(99.5+8.5, 101+18.9, Math.toRadians(0));
+            goalPose = new Pose(131, 134);
+//            gp1.rumble(1000);
+//            gp2.rumble(1000);
+        }
         g = new GreenFN(hardwareMap);
-        g.follower.setStartingPose(BlueAuto.startPose);
-        lastHeading = BlueAuto.startPose.getHeading();
-        g.follower.startTeleopDrive();
-
+        g.follower.setStartingPose(startPose);
+        g.follower.setPose(startPose);
         gp1 = new BBG(gamepad1);
         gp2 = new BBG(gamepad2);
+
+        if(GreenFN.side== GreenFN.Sides.BLUE) {
+//            g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
+            goalPose = new Pose(133, 9.5);
+            startPose = new Pose(99-8.58, 45-16.932, Math.toRadians(0));
+            gp1.rumble(1000);
+            gp2.rumble(1000);
+        }
+        else if (GreenFN.side == GreenFN.Sides.RED) {
+//            g.follower.setPose(new Pose(99.5, 101.0, g.getPose().getHeading()));
+            startPose = new Pose(99.5+8.5, 101+18.9, Math.toRadians(0));
+            goalPose = new Pose(131, 134);
+            gp1.rumble(1000);
+            gp2.rumble(1000);
+        }
+        lastHeading = startPose.getHeading();
+        g.follower.startTeleopDrive();
+
+
         headingPIDF = new PIDFController(new PIDFCoefficients(hp, hi, hd, hf));
         loopTimer = new Timer();
         lastLoopTime = loopTimer.getElapsedTimeSeconds();
+        GreenFN.minTimeBtwnShots = 0.3;
+        GreenFN.intakeRPM = 700;
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
+    }
+    @Override
+    public void init_loop() {
+        if(gamepad2.dpad_left) {
+            side = Side.BLUE;
+        }
+        if(gamepad2.dpad_right) {
+            side = Side.RED;
+        }
     }
 
     @Override
@@ -71,34 +135,87 @@ public class OneDriver extends OpMode {
         g.follower.startTeleopDrive();
         GreenFN.intakeTarget = GreenFN.intakeRPM;
         GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
+        lastHeading = g.getPose().getHeading();
     }
+
 
     @Override
     public void loop() {
         g.update();
-        double sprint = 1-(Math.abs(gp1.left_trigger) * 0.8);
+//        goal = g.getVisibleGoalPose();
+        double sprint = gamepad1.dpad_up?0.2:1;
+
+        if(!balls) {
+            isBalls3 = false;
+        }
 
         if(gp1.dpad_down())  {
             g.follower.setPose(g.getPose().copy().setHeading(0));
             lastHeading = 0;
         }
 
-        if(gp2.a()  || gp1.right_trigger()) {g.shoot(4);}
-        if(gp2.x()) {g.shoot(3);}
+        if(gp1.right_trigger()) {g.shoot(4); balls= false;}
+        if(gp2.x()) {g.shoot(1);}
         if(gp2.y()) {g.shoot(2);}
 
-        if(gp2.b()) {g.shoot(1);}
+        if(gp2.b()) {g.shoot(3);}
 
         if(gp2.left_bumper()) {g.intakeStoppers();}
-        if(gp2.right_bumper()) {g.loadStoppers();}
-        if(gp2.left_trigger()) {
-            if(GreenFN.intakeTarget == GreenFN.intakeRPM) {
-                GreenFN.intakeTarget = -GreenFN.intakeRPM;
+        if(gp2.right_bumper()) {g.loadStoppers(); balls = false;}
+//        if(gp1.left_trigger==0) {
+//            GreenFN.intakeTarget = 0;
+//        }
+//        if(gp2.left_trigger()) {
+//            if(GreenFN.intakeTarget == GreenFN.intakeRPM) {
+//                GreenFN.intakeTarget = -GreenFN.intakeRPM;
+//            }
+//            else {
+//                GreenFN.intakeTarget = GreenFN.intakeRPM;
+//            }
+//        }
+
+        if(gamepad1.left_trigger>0.05F) {
+            GreenFN.intakeTarget=GreenFN.intakeRPM;
+//            g.toUpdateSlots = true;
+        }
+        else {
+            GreenFN.intakeTarget = 0;
+//            g.toUpdateSlots = false;
+        }
+        if(g.toUpdateSlots) {
+            ctr = 0;
+            for(boolean ball: GreenFN.ballInSlot) {
+                if(ball) {
+                    ctr++;
+                }
             }
-            else {
-                GreenFN.intakeTarget = GreenFN.intakeRPM;
+            if(ctr>=2) {
+                balls = true;
+            }
+            if(ctr==3) {
+                isBalls3 = true;
+            }
+            if(balls && balls3better.betterboolean(isBalls3)) {
+                gamepad1.runRumbleEffect(balls3);
+                gamepad2.runRumbleEffect(balls3);
+            }
+            if(ballsFull.betterboolean(balls)) {
+                if(ctr==2) {
+                    gamepad1.runRumbleEffect(balls2);
+                    gamepad2.runRumbleEffect(balls2);
+                    isBalls3 = false;
+                }
+                else {
+                    isBalls3 = true;
+                }
             }
         }
+
+        if(gamepad2.left_trigger>0.05F) {
+            GreenFN.intakeTarget = -GreenFN.intakeRPM;
+            balls = false;
+        }
+
         if(gp2.right_trigger()) {
             GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
         }
@@ -108,6 +225,9 @@ public class OneDriver extends OpMode {
         }
 
         if (gp2.dpad_down()) {
+            g.stopper1.setPosition(0);
+            g.stopper2.setPosition(0);
+            g.stopper3.setPosition(0);
             g.stopper1.setPosition(GreenFN.stopperShoot);
             g.stopper2.setPosition(GreenFN.stopperShoot);
             g.stopper3.setPosition(GreenFN.stopperShoot);
@@ -117,6 +237,21 @@ public class OneDriver extends OpMode {
 
         if(gp1.a()) {
             launchPose = g.getPose();
+            if(g.getPose().getHeading()>1.5) {
+                g.follower.setPose(new Pose(99.5, 101.0, g.getPose().getHeading()));
+                goalPose = new Pose(131, 134);
+            }
+            else{
+                g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
+                goalPose = new Pose(133, 9.5);
+            }
+//            if(side==Side.RED) {
+
+//            }
+//            if(side==Side.BLUE) {
+//                g.follower.setPose(new Pose(48, 96, g.getPose().getHeading()));
+//                goalPose = new Pose(13, 137);
+//            }
         }
 
         if(gp1.x()) {
@@ -126,6 +261,24 @@ public class OneDriver extends OpMode {
         if (gp1.b()) {
             farPose = g.getPose();
         }
+
+//        if(gp1.dpad_up()) {
+//            Path parkPath = new Path(
+//                    new BezierLine(
+//                            g.getPose(),
+//                            new Pose(37.8, 37.8)
+//                    )
+//            );
+//            parkPath.setLinearHeadingInterpolation(g.getPose().getHeading(), 0);
+//            runningActions.add(
+//                    new SequentialAction(
+//                            new InstantAction(() -> g.intakeStoppers()),
+//                            g.followUntilDone(
+//                                    parkPath
+//                            )
+//                    )
+//            );
+//        }
 
         if(gp1.y()) {
             Path intakePath = new Path(
@@ -145,26 +298,30 @@ public class OneDriver extends OpMode {
             );
         }
 
+//        if(gamepad2.a) {
+//            GreenFN.shooterTarget = GreenFN.getRPMreg(g.getPose().distanceFrom(goalPose));
+//        }
 
 
-        if(gp1.right_bumper()) {
-            GreenFN.shooterTarget = GreenFN.shooterFarRPM;
-            Path farZonePath = new Path(
-                    new BezierLine(
-                            g.getPose(),
-                            farPose
-                    )
-            );
-            farZonePath.setLinearHeadingInterpolation(g.getPose().getHeading(), farPose.getHeading());
-            runningActions.add(
-                    new SequentialAction(
-                            g.loadAction(),
-                            g.followUntilDone(
-                                    farZonePath
-                            )
-                    )
-            );
-        }
+
+//        if(gp1.right_bumper()) {
+//            GreenFN.shooterTarget = GreenFN.shooterFarRPM;
+//            Path farZonePath = new Path(
+//                    new BezierLine(
+//                            g.getPose(),
+//                            farPose
+//                    )
+//            );
+//            farZonePath.setLinearHeadingInterpolation(g.getPose().getHeading(), farPose.getHeading());
+//            runningActions.add(
+//                    new SequentialAction(
+//                            g.loadAction(),
+//                            g.followUntilDone(
+//                                    farZonePath
+//                            )
+//                    )
+//            );
+//        }
 
         if(gp1.left_bumper()) {
             GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
@@ -174,7 +331,7 @@ public class OneDriver extends OpMode {
                             launchPose
                     )
             );
-            drivePath.setLinearHeadingInterpolation(g.getPose().getHeading(), launchPose.getHeading());
+            drivePath.setTangentHeadingInterpolation();
             runningActions.add(
                     new SequentialAction(
                             g.loadAction(),
@@ -206,6 +363,25 @@ public class OneDriver extends OpMode {
 
         autoDriving = g.follower.isBusy() || autoDriving;
 
+        if(g.getPose().distanceFrom(launchPose)<autoRPMtol && !inZone) {
+            g.loadStoppers();
+            inZone = true;
+        }
+        if(g.getPose().distanceFrom(launchPose)>autoRPMtol) {
+            inZone = false;
+        }
+
+
+        if(gp2.dpad_right()) headingOffset -= 2;
+        if(gp2.dpad_left()) headingOffset += 2;
+
+        if(autoDriving) {
+            lastHeading = g.getPose().getHeading(); // only set lastHeading once heading lock re-engages
+        }
+        targetHeading = gamepad1.right_bumper;
+        if(targetHeading) {
+            lastHeading = Math.atan2(goalPose.getY()-g.getPose().getY(), goalPose.getX()-g.getPose().getX())+Math.toRadians(90)+Math.toRadians(headingOffset);
+        }
 
         if ((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x) != 0 || !autoDriving) {
             if (autoDriving) {
@@ -213,9 +389,12 @@ public class OneDriver extends OpMode {
                 g.follower.breakFollowing();
                 g.follower.startTeleopDrive();
             }
+            if(targetHeading) {
+                headingLock = true;
+            }
             if(Math.abs(gamepad1.right_stick_x) > 0.01) {
                 headingPower = -gamepad1.right_stick_x * 0.75 * sprint;
-                sprint = 1;
+//                sprint = 1;
                 headingLock = false; // temporarily release heading lock while turning
             }
             else if(!headingLock && Math.abs(g.angvel) < headingLockTolerance) {
@@ -239,9 +418,14 @@ public class OneDriver extends OpMode {
 
 
         telemetry.addData("Current Motif: ", GreenFN.currentMotif);
+        telemetry.addData("side: ", GreenFN.side);
         telemetry.addData("intake velocity: ", g.iv);
         telemetry.addData("intake target: ", GreenFN.intakeTarget);
         telemetry.addData("intake power: ", GreenFN.intakePower);
+
+        telemetry.addData("gamepad1 left trigger: ", gamepad1.left_trigger);
+        telemetry.addData("gamepad1 left_trigger(): ", gp1.left_trigger());
+        telemetry.addData("heading offset: ", headingOffset);
 
         telemetry.addData("shooter1 velo: ", g.s1v);
         telemetry.addData("shooter2 velo: ", g.s2v);
@@ -261,7 +445,18 @@ public class OneDriver extends OpMode {
         telemetry.addData("apriltagy", GreenFN.fromApriltag.getY());
         telemetry.addData("apriltagheading", GreenFN.fromApriltag.getHeading());
         telemetry.addData("looptime: ", loopTimer.getElapsedTimeSeconds()-lastLoopTime);
+        telemetry.addData("side: ", side);
+        telemetry.addData("range" , goal==null?null:(goal.ftcPose.range));
+        telemetry.addData("pitch: ", goal==null?null:goal.ftcPose.pitch);
+        telemetry.addData("pose range: ", g.getPose().distanceFrom(goalPose));
+        telemetry.addData("rpm reg: ", GreenFN.getRPMreg( g.getPose().distanceFrom(goalPose)));
+        telemetry.addData("range adjustment: ", goal==null?null: goal.ftcPose.range*Math.cos(Math.toRadians(goal.ftcPose.pitch)));
+        telemetry.addData("adjustedx: ", g.getPoseFromApriltag().getX());
+        telemetry.addData("adjustedy: ", g.getPoseFromApriltag().getY());
         lastLoopTime = loopTimer.getElapsedTimeSeconds();
+        telemetry.addData("slot1: ", GreenFN.ballColors[0]);
+        telemetry.addData("slot2: ", GreenFN.ballColors[1]);
+        telemetry.addData("slot3: ", GreenFN.ballColors[2]);
 
         telemetry.update();
     }

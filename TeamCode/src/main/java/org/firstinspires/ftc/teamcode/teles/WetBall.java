@@ -57,6 +57,7 @@ public class WetBall extends OpMode {
     Timer loopTimer;
     public static double headingLockTolerance = 0.007;
     public static double hp = 0.8, hi = 0, hd=0.09, hf=0.01;
+    public static double shotTime = 0.55;
     double lastLoopTime;
     Pose goalPose = new Pose(0,0,0);
     int ctr = 0;
@@ -69,20 +70,54 @@ public class WetBall extends OpMode {
     FirstBoolean balls3better = new FirstBoolean();
     AprilTagDetection goal;
     boolean isBalls3 = false;
+    double headingOffset = 0;
     double newX, newY;
     @Override
     public void init() {
+        if(GreenFN.side== GreenFN.Sides.BLUE) {
+//            g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
+            goalPose = new Pose(133, 9.5);
+            startPose = new Pose(99-8.58, 45-16.932, Math.toRadians(0));
+//            gp1.rumble(1000);
+//            gp2.rumble(1000);
+        }
+        else if (GreenFN.side == GreenFN.Sides.RED) {
+//            g.follower.setPose(new Pose(99.5, 101.0, g.getPose().getHeading()));
+            startPose = new Pose(99.5-8.5, 101+15.9, Math.toRadians(0));
+            goalPose = new Pose(131, 134);
+//            gp1.rumble(1000);
+//            gp2.rumble(1000);
+        }
         g = new GreenFN(hardwareMap);
         g.follower.setStartingPose(startPose);
+        g.follower.setPose(startPose);
+        gp1 = new BBG(gamepad1);
+        gp2 = new BBG(gamepad2);
+
+        if(GreenFN.side== GreenFN.Sides.BLUE) {
+//            g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
+            goalPose = new Pose(133, 9.5);
+            startPose = new Pose(99-8.58, 45-16.932, Math.toRadians(0));
+            gp1.rumble(1000);
+            gp2.rumble(1000);
+        }
+        else if (GreenFN.side == GreenFN.Sides.RED) {
+//            g.follower.setPose(new Pose(99.5, 101.0, g.getPose().getHeading()));
+            startPose = new Pose(99.5-8.5, 101+15.9, Math.toRadians(0));
+            goalPose = new Pose(131, 134);
+            gp1.rumble(1000);
+            gp2.rumble(1000);
+        }
         lastHeading = startPose.getHeading();
         g.follower.startTeleopDrive();
 
-        gp1 = new BBG(gamepad1);
-        gp2 = new BBG(gamepad2);
+        GreenFN.intakeRPM += 400;
+
+
         headingPIDF = new PIDFController(new PIDFCoefficients(hp, hi, hd, hf));
         loopTimer = new Timer();
         lastLoopTime = loopTimer.getElapsedTimeSeconds();
-        GreenFN.minTimeBtwnShots = 0.3;
+        GreenFN.minTimeBtwnShots = 0.2;
         GreenFN.intakeRPM = 700;
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -110,8 +145,8 @@ public class WetBall extends OpMode {
     @Override
     public void loop() {
         g.update();
-        goal = g.getVisibleGoalPose();
-        double sprint = 1;
+//        goal = g.getVisibleGoalPose();
+        double sprint = gamepad1.dpad_up?0.2:1;
 
         if(!balls) {
             isBalls3 = false;
@@ -121,15 +156,38 @@ public class WetBall extends OpMode {
             g.follower.setPose(g.getPose().copy().setHeading(0));
             lastHeading = 0;
         }
-
-        if(gp1.right_trigger()) {g.shoot(4); balls= false;}
+//blue right middle left, red left middle right
+        if(gp1.right_trigger()) {
+            if(GreenFN.side == GreenFN.Sides.BLUE) {
+                g.shoot(3);
+                g.shoot(2);
+                g.shoot(1);
+            }
+            else {
+                g.shoot(1);
+                g.shoot(2);
+                g.shoot(3);
+            }
+            balls= false;
+        }
         if(gp2.x()) {g.shoot(1);}
         if(gp2.y()) {g.shoot(2);}
 
         if(gp2.b()) {g.shoot(3);}
 
         if(gp2.left_bumper()) {g.intakeStoppers();}
-        if(gp2.right_bumper()) {g.loadStoppers(); balls = false;}
+        if(gp2.right_bumper()) {
+            g.loadStoppers(); balls = false; GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
+        }
+        if(gamepad2.right_bumper) {
+            GreenFN.intakeTarget = GreenFN.intakeRPM;
+        }
+        else {
+            GreenFN.intakeTarget = 0;
+        }
+        if(gp2.a()) {
+            g.loaded = true;
+        }
 //        if(gp1.left_trigger==0) {
 //            GreenFN.intakeTarget = 0;
 //        }
@@ -142,7 +200,7 @@ public class WetBall extends OpMode {
 //            }
 //        }
 
-        if(gamepad1.left_trigger>0.05F) {
+        if(gamepad1.left_trigger>0.05F || gamepad2.left_trigger>0.05F || gamepad2.right_bumper) {
             GreenFN.intakeTarget=GreenFN.intakeRPM;
 //            g.toUpdateSlots = true;
         }
@@ -179,14 +237,14 @@ public class WetBall extends OpMode {
             }
         }
 
-        if(gamepad2.left_trigger>0.05F) {
+        if(gamepad2.right_trigger>0.05F) {
             GreenFN.intakeTarget = -GreenFN.intakeRPM;
             balls = false;
         }
 
-        if(gp2.right_trigger()) {
-            GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
-        }
+//        if(gp2.right_trigger()) {
+//            GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
+//        }
 
         if (gp2.dpad_up()) {
             GreenFN.shooterTarget = GreenFN.shooterFarRPM;
@@ -206,11 +264,11 @@ public class WetBall extends OpMode {
         if(gp1.a()) {
             launchPose = g.getPose();
             if(g.getPose().getHeading()>1.5) {
-                g.follower.setPose(new Pose(96, 96, g.getPose().getHeading()));
+                g.follower.setPose(new Pose(99.5, 101.0, g.getPose().getHeading()));
                 goalPose = new Pose(131, 134);
             }
             else{
-                g.follower.setPose(new Pose(96, 48, g.getPose().getHeading()));
+                g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
                 goalPose = new Pose(133, 9.5);
             }
 //            if(side==Side.RED) {
@@ -230,23 +288,23 @@ public class WetBall extends OpMode {
             farPose = g.getPose();
         }
 
-        if(gp1.dpad_up()) {
-            Path parkPath = new Path(
-                    new BezierLine(
-                            g.getPose(),
-                            new Pose(37.8, 37.8)
-                    )
-            );
-            parkPath.setLinearHeadingInterpolation(g.getPose().getHeading(), 0);
-            runningActions.add(
-                    new SequentialAction(
-                            new InstantAction(() -> g.intakeStoppers()),
-                            g.followUntilDone(
-                                    parkPath
-                            )
-                    )
-            );
-        }
+//        if(gp1.dpad_up()) {
+//            Path parkPath = new Path(
+//                    new BezierLine(
+//                            g.getPose(),
+//                            new Pose(37.8, 37.8)
+//                    )
+//            );
+//            parkPath.setLinearHeadingInterpolation(g.getPose().getHeading(), 0);
+//            runningActions.add(
+//                    new SequentialAction(
+//                            new InstantAction(() -> g.intakeStoppers()),
+//                            g.followUntilDone(
+//                                    parkPath
+//                            )
+//                    )
+//            );
+//        }
 
         if(gp1.y()) {
             Path intakePath = new Path(
@@ -266,9 +324,9 @@ public class WetBall extends OpMode {
             );
         }
 
-        if(gamepad2.a) {
-            GreenFN.shooterTarget = GreenFN.getRPMreg(g.getPose().distanceFrom(goalPose));
-        }
+//        if(gamepad2.a) {
+//            GreenFN.shooterTarget = GreenFN.getRPMreg(g.getPose().distanceFrom(goalPose));
+//        }
 
 
 
@@ -290,26 +348,26 @@ public class WetBall extends OpMode {
 //                    )
 //            );
 //        }
-
-        if(gp1.left_bumper()) {
-            GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
-            Path drivePath = new Path(
-                    new BezierLine(
-                            g.getPose(),
-                            launchPose
-                    )
-            );
-            drivePath.setTangentHeadingInterpolation();
-            runningActions.add(
-                    new SequentialAction(
-                            g.loadAction(),
-                            g.followUntilDone(
-                                    drivePath,
-                                    true
-                            )
-                    )
-            );
-        }
+//
+//        if(gp1.left_bumper()) {
+//            GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
+//            Path drivePath = new Path(
+//                    new BezierLine(
+//                            g.getPose(),
+//                            launchPose
+//                    )
+//            );
+//            drivePath.setTangentHeadingInterpolation();
+//            runningActions.add(
+//                    new SequentialAction(
+//                            g.loadAction(),
+//                            g.followUntilDone(
+//                                    drivePath,
+//                                    true
+//                            )
+//                    )
+//            );
+//        }
 
         if(gp1.ps || gp1.touchpad) {
             runningActions = new ArrayList<>();
@@ -340,12 +398,27 @@ public class WetBall extends OpMode {
         }
 
 
+        if(gp2.dpad_right()) {
+            headingOffset -= 2;
+        }
+        if(gp2.dpad_left()) {
+            headingOffset += 2;
+        }
+
         if(autoDriving) {
             lastHeading = g.getPose().getHeading(); // only set lastHeading once heading lock re-engages
         }
         targetHeading = gamepad1.right_bumper;
+        double gpx = goalPose.getX();
+        double gpy = goalPose.getY();
+        gpx = goalPose.getX()-g.follower.getVelocity().getXComponent()*shotTime;
+        gpy = goalPose.getY()-g.follower.getVelocity().getYComponent()*shotTime;
         if(targetHeading) {
-            lastHeading = Math.atan2(goalPose.getY()-g.getPose().getY(), goalPose.getX()-g.getPose().getX())+Math.toRadians(90);
+            lastHeading = Math.atan2(gpy-g.getPose().getY(), gpx-g.getPose().getX())+Math.toRadians(90)+Math.toRadians(headingOffset);
+        }
+        if(gamepad1.left_bumper) {
+            lastHeading = Math.atan2(startPose.getY()-g.getPose().getY(), startPose.getX()-g.getPose().getX());
+            targetHeading = true;
         }
 
         if ((gamepad1.left_stick_y + gamepad1.left_stick_x + gamepad1.right_stick_x) != 0 || !autoDriving) {
@@ -359,7 +432,7 @@ public class WetBall extends OpMode {
             }
             if(Math.abs(gamepad1.right_stick_x) > 0.01) {
                 headingPower = -gamepad1.right_stick_x * 0.75 * sprint;
-                sprint = 1;
+//                sprint = 1;
                 headingLock = false; // temporarily release heading lock while turning
             }
             else if(!headingLock && Math.abs(g.angvel) < headingLockTolerance) {
@@ -383,12 +456,20 @@ public class WetBall extends OpMode {
 
 
         telemetry.addData("Current Motif: ", GreenFN.currentMotif);
+        telemetry.addData("side: ", GreenFN.side);
         telemetry.addData("intake velocity: ", g.iv);
         telemetry.addData("intake target: ", GreenFN.intakeTarget);
         telemetry.addData("intake power: ", GreenFN.intakePower);
+        telemetry.addData("x velo: ", g.follower.getVelocity().getXComponent());
+        telemetry.addData("y velo: ", g.follower.getVelocity().getYComponent());
+        telemetry.addData("adjusted goal pose x: ", gpx);
+        telemetry.addData("adjusted goal pose y: ", gpy);
+
+
 
         telemetry.addData("gamepad1 left trigger: ", gamepad1.left_trigger);
         telemetry.addData("gamepad1 left_trigger(): ", gp1.left_trigger());
+        telemetry.addData("heading offset: ", headingOffset);
 
         telemetry.addData("shooter1 velo: ", g.s1v);
         telemetry.addData("shooter2 velo: ", g.s2v);
