@@ -35,7 +35,6 @@ import java.util.List;
 
 @Autonomous()
 @Config()
-@Disabled()
 public class RedAutoTest extends LinearOpMode {
 
     GreenFN g;
@@ -43,6 +42,7 @@ public class RedAutoTest extends LinearOpMode {
     public class FollowerUpdate implements Action {
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+            g.auto = true;
             g.update();
             telemetry.addData("x: ", g.getPose().getX());
             telemetry.addData("y: ", g.getPose().getY());
@@ -168,62 +168,114 @@ public class RedAutoTest extends LinearOpMode {
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
             GreenFN.Motifs motif = g.getCurrentMotif();
-            List<ColorBlobLocatorProcessor.Blob> purple = g.colorLocator.getBlobs();
-            List<ColorBlobLocatorProcessor.Blob> green = g.colorLocator2.getBlobs();
-            int blobCount = purple.size() + green.size();
-            telemetry.addData("blobs detected", blobCount);
+
+
             Size myBoxFitSize;
-            for(ColorBlobLocatorProcessor.Blob b : purple)
+            for(ColorBlobLocatorProcessor.Blob b : g.newPurple)
             {
                 RotatedRect boxFit = b.getBoxFit();
                 myBoxFitSize = boxFit.size;
-                telemetry.addData("width", myBoxFitSize.width);
-                telemetry.addData("height", myBoxFitSize.height);
-                telemetry.addData("angle", boxFit.angle);
+                telemetry.addData("new purple width", myBoxFitSize.width);
+                telemetry.addData("new purple height", myBoxFitSize.height);
+                telemetry.addData("new purple angle", boxFit.angle);
                 if(myBoxFitSize.width/ myBoxFitSize.height > 3.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.35 ){
-                    blobCount = blobCount + 1;
+                    g.newBlobs = g.newBlobs + 1;
                 }
                 else if (myBoxFitSize.width/ myBoxFitSize.height > 5.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.18) {
-                    blobCount = blobCount + 2;
+                    g.newBlobs = g.newBlobs + 2;
                 }
                 else if (myBoxFitSize.width/ myBoxFitSize.height > 7.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.135) {
-                    blobCount = blobCount + 3;
+                    g.newBlobs = g.newBlobs + 3;
                 }
                 else if (myBoxFitSize.width/ myBoxFitSize.height > 9.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.11) {
-                    blobCount = blobCount + 4;
+                    g.newBlobs = g.newBlobs + 4;
                 }
                 else if (myBoxFitSize.width/ myBoxFitSize.height > 11.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.09) {
-                    blobCount = blobCount + 5;
+                    g.newBlobs = g.newBlobs + 5;
                 }
                 else if (myBoxFitSize.width/ myBoxFitSize.height > 13.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.078) {
-                    blobCount = blobCount + 6;
+                    g.newBlobs = g.newBlobs + 6;
                 }
             }
             Size myBoxFitSize2;
-            for(ColorBlobLocatorProcessor.Blob b : green)
+            for(ColorBlobLocatorProcessor.Blob b : g.newGreen)
             {
                 RotatedRect boxFit = b.getBoxFit();
                 myBoxFitSize2 = boxFit.size;
-                telemetry.addData("width2", myBoxFitSize2.width);
-                telemetry.addData("height2", myBoxFitSize2.height);
-                telemetry.addData("angle2", boxFit.angle);
+                telemetry.addData("new green width", myBoxFitSize2.width);
+                telemetry.addData("new green height", myBoxFitSize2.height);
+                telemetry.addData("new green angle", boxFit.angle);
                 if(myBoxFitSize2.width/ myBoxFitSize2.height > 3.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.35 ){
-                    blobCount = blobCount+1;
+                    g.newBlobs = g.newBlobs + 1;
                 }
                 else if (myBoxFitSize2.width/ myBoxFitSize2.height > 5.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.18) {
-                    blobCount = blobCount+2;
+                    g.newBlobs = g.newBlobs + 2;
                 }
                 else if (myBoxFitSize2.width/ myBoxFitSize2.height > 7.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.135) {
-                    blobCount = blobCount+3;
+                    g.newBlobs = g.newBlobs + 3;
                 }
                 else if (myBoxFitSize2.width/ myBoxFitSize2.height > 9.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.11) {
-                    blobCount = blobCount + 4;
+                    g.newBlobs = g.newBlobs + 4;
                 }
                 else if (myBoxFitSize2.width/ myBoxFitSize2.height > 11.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.09) {
-                    blobCount = blobCount + 5;
+                    g.newBlobs = g.newBlobs + 5;
                 }
                 else if (myBoxFitSize2.width/ myBoxFitSize2.height > 13.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.078) {
-                    blobCount = blobCount + 6;
+                    g.newBlobs = g.newBlobs + 6;
+                }
+            }
+            Size myBoxFitSize3;
+            for(ColorBlobLocatorProcessor.Blob b : g.oldPurple)
+            {
+                RotatedRect boxFit = b.getBoxFit();
+                myBoxFitSize3 = boxFit.size;
+                telemetry.addData("new purple width", myBoxFitSize3.width);
+                telemetry.addData("new purple height", myBoxFitSize3.height);
+                telemetry.addData("new purple angle", boxFit.angle);
+                if(myBoxFitSize3.width/ myBoxFitSize3.height > 3.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.35 ){
+                    g.oldBlobs = g.oldBlobs + 1;
+                }
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 5.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.18) {
+                    g.oldBlobs = g.oldBlobs + 2;
+                }
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 7.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.135) {
+                    g.oldBlobs = g.oldBlobs + 3;
+                }
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 9.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.11) {
+                    g.oldBlobs = g.oldBlobs + 4;
+                }
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 11.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.09) {
+                    g.oldBlobs = g.oldBlobs + 5;
+                }
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 13.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.078) {
+                    g.oldBlobs = g.oldBlobs + 6;
+                }
+            }
+            Size myBoxFitSize4;
+            for(ColorBlobLocatorProcessor.Blob b : g.oldGreen)
+            {
+                RotatedRect boxFit = b.getBoxFit();
+                myBoxFitSize4 = boxFit.size;
+                telemetry.addData("old green width", myBoxFitSize4.width);
+                telemetry.addData("old green height", myBoxFitSize4.height);
+                telemetry.addData("old green angle", boxFit.angle);
+                if(myBoxFitSize4.width/ myBoxFitSize4.height > 3.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.35 ){
+                    g.oldBlobs = g.oldBlobs + 1;
+                }
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 5.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.18) {
+                    g.oldBlobs = g.oldBlobs + 2;
+                }
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 7.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.135) {
+                    g.oldBlobs = g.oldBlobs + 3;
+                }
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 9.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.11) {
+                    g.oldBlobs = g.oldBlobs + 4;
+                }
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 11.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.09) {
+                    g.oldBlobs = g.oldBlobs + 5;
+                }
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 13.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.078) {
+                    g.oldBlobs = g.oldBlobs + 6;
                 }
             }
             if (motif==null) {
@@ -241,7 +293,7 @@ public class RedAutoTest extends LinearOpMode {
                             g.shoot(1);
                             break;
                         case 1:
-                            switch(blobCount) {
+                            switch(g.blobCount) {
                                 case 0:
                                     g.shoot(1);
                                     g.shoot(2);
@@ -265,7 +317,7 @@ public class RedAutoTest extends LinearOpMode {
                             }
                             break;
                         case 2:
-                            switch(blobCount) {
+                            switch(g.blobCount) {
                                 case 0:
                                     g.shoot(2);
                                     g.shoot(3);
@@ -304,7 +356,7 @@ public class RedAutoTest extends LinearOpMode {
                             }
                             break;
                         case 3:
-                            switch(blobCount) {
+                            switch(g.blobCount) {
                                 case 0:
                                     g.shoot(3);
                                     g.shoot(2);
@@ -367,7 +419,7 @@ public class RedAutoTest extends LinearOpMode {
                             g.shoot(3);
                             break;
                         case 1:
-                            switch(blobCount) {
+                            switch(g.blobCount) {
                                 case 0:
                                     g.shoot(2);
                                     g.shoot(1);
@@ -391,7 +443,7 @@ public class RedAutoTest extends LinearOpMode {
                             }
                             break;
                         case 2:
-                            switch(blobCount) {
+                            switch(g.blobCount) {
                                 case 0:
                                     g.shoot(1);
                                     g.shoot(2);
@@ -430,7 +482,7 @@ public class RedAutoTest extends LinearOpMode {
                             }
                             break;
                         case 3:
-                            switch(blobCount) {
+                            switch(g.blobCount) {
                                 case 0:
                                     //pgp
                                     g.shoot(2);//purple
@@ -503,7 +555,7 @@ public class RedAutoTest extends LinearOpMode {
                             g.shoot(2);
                             break;
                         case 1:
-                            switch(blobCount) {
+                            switch(g.blobCount) {
                                 case 0:
                                     g.shoot(3);
                                     g.shoot(2);
@@ -527,7 +579,7 @@ public class RedAutoTest extends LinearOpMode {
                             }
                             break;
                         case 2:
-                            switch(blobCount) {
+                            switch(g.blobCount) {
                                 case 0:
                                     g.shoot(3);
                                     g.shoot(1);
@@ -566,7 +618,7 @@ public class RedAutoTest extends LinearOpMode {
                             }
                             break;
                         case 3:
-                            switch(blobCount) {
+                            switch(g.blobCount) {
                                 case 0:
                                     g.shoot(1);
                                     g.shoot(2);
