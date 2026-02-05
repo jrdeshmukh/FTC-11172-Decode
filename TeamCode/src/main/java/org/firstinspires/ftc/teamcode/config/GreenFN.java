@@ -19,12 +19,9 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -39,10 +36,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorRange;
-import org.firstinspires.ftc.vision.opencv.ColorSpace;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
-import org.opencv.core.RotatedRect;
-import org.opencv.core.Scalar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,14 +130,14 @@ public class GreenFN {
             .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.OPENING)
 
             .build();
-    public List<ColorBlobLocatorProcessor.Blob> newPurple = colorLocator.getBlobs();
-    public List<ColorBlobLocatorProcessor.Blob> newGreen = colorLocator2.getBlobs();
-    public List<ColorBlobLocatorProcessor.Blob> oldPurple = oldcolorLocator.getBlobs();
-    public List<ColorBlobLocatorProcessor.Blob> oldGreen = oldcolorLocator2.getBlobs();
-    public int newBlobs = newPurple.size() + newGreen.size();
-    public int oldBlobs = oldPurple.size() + oldGreen.size();
+    public List<ColorBlobLocatorProcessor.Blob> rightPurple = colorLocator.getBlobs();
+    public List<ColorBlobLocatorProcessor.Blob> rightGreen = colorLocator2.getBlobs();
+    public List<ColorBlobLocatorProcessor.Blob> leftPurple = oldcolorLocator.getBlobs();
+    public List<ColorBlobLocatorProcessor.Blob> leftGreen = oldcolorLocator2.getBlobs();
+    public int rightBlobs = rightPurple.size() + rightGreen.size();
+    public int leftBlobs = leftPurple.size() + leftGreen.size();
     public int storedBlobs = 0;
-    public int blobCount = storedBlobs + newBlobs;
+    public int blobCount = storedBlobs + leftBlobs;
 
     enum Colors {
         PURPLE,
@@ -489,12 +483,17 @@ public class GreenFN {
             visionPortal.setProcessorEnabled(oldcolorLocator, true);
             visionPortal.setProcessorEnabled(oldcolorLocator2, true);
         }
+        //change to heading target heading =
+        // (arccosin(distance from camera to specific point on classifier at the right pose /
+        // vertical distance from camera to classifier))
+        //else if (auto && Math.toDegrees(g.getPose().getHeading()) >= target heading - 2 &&
+        //g.getPose().getHeading() <= target heading + 2) {}
         else if (auto && stopwatch.milliseconds() >= 8 && stopwatch.milliseconds() <= 10) {
             visionPortal.setProcessorEnabled(colorLocator, true);
             visionPortal.setProcessorEnabled(colorLocator2, true);
             visionPortal.setProcessorEnabled(oldcolorLocator, true);
             visionPortal.setProcessorEnabled(oldcolorLocator2, true);
-            storedBlobs = storedBlobs + oldBlobs;
+            storedBlobs = storedBlobs + rightBlobs;
         }
         else {
             visionPortal.setProcessorEnabled(colorLocator, false);
