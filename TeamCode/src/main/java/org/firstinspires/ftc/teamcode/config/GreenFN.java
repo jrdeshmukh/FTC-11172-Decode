@@ -181,6 +181,7 @@ public class GreenFN {
     public int counter = 0;
     public int colorCounter = 0;
     public static boolean detect = true;
+    public List<AprilTagDetection> detections;
 
     public Timer shotTimer;
     public double recentShotTime = 0;
@@ -363,15 +364,15 @@ public class GreenFN {
         iv = intake.getVelocity(AngleUnit.DEGREES);
         s1v = shooter1.getVelocity(AngleUnit.DEGREES);
         s2v = shooter2.getVelocity(AngleUnit.DEGREES);
-        List<AprilTagDetection> detections = aprilTag.getDetections();
-        if (detections.size() > 0) {
-            AprilTagDetection detection = detections.get(0); // pick the first detected tag
-
-            // Convert to field coordinates
-            if(detection.id == 20 || detection.id == 24) {
-                fromApriltag = convertToFieldPosition(detection);
-            }
-        }
+        detections = aprilTag.getDetections();
+//        if (!detections.isEmpty()) {
+//            AprilTagDetection detection = detections.get(0); // pick the first detected tag
+//
+//            // Convert to field coordinates
+//            if(detection.id == 20 || detection.id == 24) {
+//                fromApriltag = convertToFieldPosition(detection);
+//            }
+//        }
 
 
         if(counter%20==0) {

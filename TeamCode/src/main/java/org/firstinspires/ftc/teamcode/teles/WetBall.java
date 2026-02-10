@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.teamcode.teles;
 
+import static org.firstinspires.ftc.teamcode.config.GreenFN.Sides.BLUE;
+import static org.firstinspires.ftc.teamcode.config.GreenFN.Sides.RED;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -47,6 +50,7 @@ public class WetBall extends OpMode {
     double headingError = 0;
     double lastHeading;
     boolean balls = false;
+    public static int loopsPredicted = 1, loopsBack = 1;
     List<Action> runningActions = new ArrayList<>();
     Gamepad.RumbleEffect balls2 = new Gamepad.RumbleEffect.Builder().addStep(1, 1, 100).build();
     Gamepad.RumbleEffect balls3 = new Gamepad.RumbleEffect.Builder().addStep(1, 1, 200).addStep(0,0,100).addStep(1,1,200).addStep(0,0,100).addStep(1,1,200).build();
@@ -56,10 +60,13 @@ public class WetBall extends OpMode {
     public static PIDFController headingPIDF;
     Timer loopTimer;
     public static double headingLockTolerance = 0.007;
-    public static double hp = 0.8, hi = 0, hd=0.09, hf=0.01;
-    public static double shotTime = 0.55;
+    public static double hp = 0.7 , hi = 0, hd=0.09, hf=0.01;
+    public static double shotTime = 0.8;
     double lastLoopTime;
     Pose goalPose = new Pose(0,0,0);
+    double[] xvelo = new double[20];
+    double[] yvelo = new double[20];
+    public static double cameraDist=5, cameraBlueOffset=3, cameraRedOffset=-3;
     int ctr = 0;
     enum Side {
         RED,
@@ -72,19 +79,46 @@ public class WetBall extends OpMode {
     boolean isBalls3 = false;
     double headingOffset = 0;
     double newX, newY;
+    public double[] insertShiftArray(double[] input, double insertVal, double insertLoc) {
+        int idx = (int) insertLoc;
+
+        // clamp index to valid range
+        if (idx < 0) idx = 0;
+        if (idx >= input.length) idx = input.length - 1;
+
+        double[] result = new double[input.length];
+
+        // copy up to insertion index
+        for (int i = 0; i < idx; i++) {
+            result[i] = input[i];
+        }
+
+        // insert value
+        result[idx] = insertVal;
+
+        // shift remaining elements right, dropping the last one
+        for (int i = idx + 1; i < input.length; i++) {
+            result[i] = input[i - 1];
+        }
+
+        return result;
+    }
+
+    public static double redGoalX = 131, redGoalY = 134, blueGoalX = 133, blueGoalY = 9.5;
+
     @Override
     public void init() {
-        if(GreenFN.side== GreenFN.Sides.BLUE) {
+        if(GreenFN.side== BLUE) {
 //            g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
-            goalPose = new Pose(133, 9.5);
+            goalPose = new Pose(blueGoalX, blueGoalY);
             startPose = new Pose(99-8.58, 45-16.932, Math.toRadians(0));
 //            gp1.rumble(1000);
 //            gp2.rumble(1000);
         }
-        else if (GreenFN.side == GreenFN.Sides.RED) {
+        else if (GreenFN.side == RED) {
 //            g.follower.setPose(new Pose(99.5, 101.0, g.getPose().getHeading()));
             startPose = new Pose(99.5-8.5, 101+15.9, Math.toRadians(0));
-            goalPose = new Pose(131, 134);
+            goalPose = new Pose(redGoalX, redGoalY);
 //            gp1.rumble(1000);
 //            gp2.rumble(1000);
         }
@@ -94,14 +128,14 @@ public class WetBall extends OpMode {
         gp1 = new BBG(gamepad1);
         gp2 = new BBG(gamepad2);
 
-        if(GreenFN.side== GreenFN.Sides.BLUE) {
+        if(GreenFN.side== BLUE) {
 //            g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
             goalPose = new Pose(133, 9.5);
             startPose = new Pose(99-8.58, 45-16.932, Math.toRadians(0));
             gp1.rumble(1000);
             gp2.rumble(1000);
         }
-        else if (GreenFN.side == GreenFN.Sides.RED) {
+        else if (GreenFN.side == RED) {
 //            g.follower.setPose(new Pose(99.5, 101.0, g.getPose().getHeading()));
             startPose = new Pose(99.5-8.5, 101+15.9, Math.toRadians(0));
             goalPose = new Pose(131, 134);
@@ -158,7 +192,7 @@ public class WetBall extends OpMode {
         }
 //blue right middle left, red left middle right
         if(gp1.right_trigger()) {
-            if(GreenFN.side == GreenFN.Sides.BLUE) {
+            if(GreenFN.side == BLUE) {
                 g.shoot(3);
                 g.shoot(2);
                 g.shoot(1);
@@ -411,10 +445,63 @@ public class WetBall extends OpMode {
         targetHeading = gamepad1.right_bumper;
         double gpx = goalPose.getX();
         double gpy = goalPose.getY();
-        gpx = goalPose.getX()-g.follower.getVelocity().getXComponent()*shotTime;
-        gpy = goalPose.getY()-g.follower.getVelocity().getYComponent()*shotTime;
+
+        xvelo = insertShiftArray(xvelo, g.follower.getVelocity().getXComponent(), 0);
+        yvelo = insertShiftArray(yvelo, g.follower.getVelocity().getYComponent(), 0);
+
+        double accelX = -(xvelo[loopsBack]-xvelo[0])/(loopsBack);
+        double accelY = -(yvelo[loopsBack]-yvelo[0])/(loopsBack);
+
+        double xVelPred = xvelo[0]+accelX*loopsPredicted;
+        double yVelPred = yvelo[0]+accelY*loopsPredicted;
+
+        gpx = goalPose.getX()-xVelPred*shotTime;
+        gpy = goalPose.getY()-yVelPred*shotTime;
+
+
+        boolean usingApriltag = false;
+        AprilTagDetection tag = null;
         if(targetHeading) {
-            lastHeading = Math.atan2(gpy-g.getPose().getY(), gpx-g.getPose().getX())+Math.toRadians(90)+Math.toRadians(headingOffset);
+                if(!g.detections.isEmpty() && Math.abs(g.follower.getVelocity().getXComponent()) < 10 && Math.abs(g.follower.getVelocity().getYComponent()) < 10) {
+                    if (GreenFN.side == RED) {
+                        for (AprilTagDetection detection : g.detections) {
+                            telemetry.addData("detection id: ", detection.id);
+                            if (detection.id == 24) {
+                                usingApriltag = true;
+                                tag = detection;
+                                double distance = g.getPose().distanceFrom(goalPose);
+                                double idealBearing = Math.asin((cameraRedOffset)/(distance-cameraDist));
+                                lastHeading = g.follower.getHeading() - Math.toRadians(detection.ftcPose.bearing)-idealBearing;
+//                                hp = 0.5;
+//                                headingPIDF.setCoefficients(new PIDFCoefficients(hp, hi, hd, hf));
+//                                headingOffset = lastHeading - Math.atan2(gpy - g.getPose().getY(), gpx - g.getPose().getX()) + Math.toRadians(90);
+                            }
+                        }
+                    } else if (GreenFN.side == BLUE) {
+                        for (AprilTagDetection detection : g.detections) {
+                            if (detection.id == 20) {
+                                usingApriltag = true;
+                                tag = detection;
+//                                hp = 0.5;
+//                                headingPIDF.setCoefficients(new PIDFCoefficients(hp, hi, hd, hf));
+                                double distance = g.getPose().distanceFrom(goalPose);
+                                double idealBearing = Math.asin((cameraBlueOffset)/(distance-cameraDist));
+                                lastHeading = g.follower.getHeading() - Math.toRadians(detection.ftcPose.bearing)-idealBearing;//                                headingOffset = lastHeading - Math.atan2(gpy - g.getPose().getY(), gpx - g.getPose().getX()) + Math.toRadians(90);
+                            }
+                        }
+                    }
+                }
+            else {
+//                    hp = 1;
+//                    headingPIDF.setCoefficients(new PIDFCoefficients(hp, hi, hd, hf));
+                if(Math.abs(xVelPred)<10&&Math.abs(yVelPred)<10) {
+                    lastHeading = Math.atan2(gpy-g.getPose().getY(), gpx-g.getPose().getX())+Math.toRadians(90)+Math.toRadians(headingOffset);
+
+                }
+                else{
+                    lastHeading = Math.atan2(gpy-g.getPose().getY(), gpx-g.getPose().getX())+Math.toRadians(90);
+                }
+            }
         }
         if(gamepad1.left_bumper) {
             lastHeading = Math.atan2(startPose.getY()-g.getPose().getY(), startPose.getX()-g.getPose().getX());
@@ -462,8 +549,16 @@ public class WetBall extends OpMode {
         telemetry.addData("intake power: ", GreenFN.intakePower);
         telemetry.addData("x velo: ", g.follower.getVelocity().getXComponent());
         telemetry.addData("y velo: ", g.follower.getVelocity().getYComponent());
+        telemetry.addData("yvelpred: ", yVelPred);
+        telemetry.addData("xvelpred: ", xVelPred);
+        telemetry.addData("xaccel: ", accelX);
+        telemetry.addData("yaccel: ", accelY);
         telemetry.addData("adjusted goal pose x: ", gpx);
         telemetry.addData("adjusted goal pose y: ", gpy);
+        telemetry.addData("heading offset: ", headingOffset);
+        telemetry.addData("using apriltag: ", usingApriltag);
+        telemetry.addData("apriltag bearing: ", usingApriltag?tag.ftcPose.bearing:null);
+        telemetry.addData("detections: ", g.detections);
 
 
 
