@@ -19,14 +19,12 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.arcrobotics.ftclib.controller.PIDController;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -38,10 +36,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorRange;
-import org.firstinspires.ftc.vision.opencv.ColorSpace;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
-import org.opencv.core.RotatedRect;
-import org.opencv.core.Scalar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +48,7 @@ import java.util.List;
 
 @Config
 public class GreenFN {
+    public boolean auto = false;
     public static double shooterCloseRPM = 645;
     public static double shooterAutoRPM = 668;
     private static final Logger log = LoggerFactory.getLogger(GreenFN.class);
@@ -62,12 +58,15 @@ public class GreenFN {
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
     static Size cameraResolution = new Size(640, 480);
+    ImageRegion previousFrame = ImageRegion.asUnityCenterCoordinates(-1,1,0,0);
+    ImageRegion newFrame = ImageRegion.asUnityCenterCoordinates(0,0,1,-1);
     private List<AprilTagDetection> detectedTags = new ArrayList<>();
     private Telemetry telemetry;
     public ColorBlobLocatorProcessor colorLocator = new ColorBlobLocatorProcessor.Builder()
             .setTargetColorRange(ColorRange.ARTIFACT_PURPLE)// Use a predefined color match
             .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
-            .setRoi(ImageRegion.asUnityCenterCoordinates(-0.75, 0.75, 0.75, -0.75))
+            .setRoi(newFrame)
+                    //.asUnityCenterCoordinates(-0.75, 0.75, 0.75, -0.75))
             .setDrawContours(true)   // Show contours on the Stream Preview
             //.setBoxFitColor(0)       // Disable the drawing of rectangles
             //.setEnclosingCircleColor(0)
@@ -84,7 +83,8 @@ public class GreenFN {
     public ColorBlobLocatorProcessor colorLocator2 = new ColorBlobLocatorProcessor.Builder()
             .setTargetColorRange(ColorRange.ARTIFACT_GREEN)// Use a predefined color match
             .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
-            .setRoi(ImageRegion.asUnityCenterCoordinates(-0.75, 0.75, 0.75, -0.75))
+            .setRoi(newFrame)
+                    //asUnityCenterCoordinates(-0.75, 0.75, 0.75, -0.75))
             .setDrawContours(true)   // Show contours on the Stream Preview
             //.setBoxFitColor(0)       // Disable the drawing of rectangles
             //.setEnclosingCircleColor(0)
@@ -96,6 +96,48 @@ public class GreenFN {
             .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.OPENING)
 
             .build();
+    public ColorBlobLocatorProcessor oldcolorLocator = new ColorBlobLocatorProcessor.Builder()
+            .setTargetColorRange(ColorRange.ARTIFACT_PURPLE)// Use a predefined color match
+            .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
+            .setRoi(previousFrame)
+            //.asUnityCenterCoordinates(-0.75, 0.75, 0.75, -0.75))
+            .setDrawContours(true)   // Show contours on the Stream Preview
+            //.setBoxFitColor(0)       // Disable the drawing of rectangles
+            //.setEnclosingCircleColor(0)
+            .setCircleFitColor(Color.rgb(255, 255, 0)) // Draw a circle
+            .setBlurSize(3)          // Smooth the transitions between different colors in image
+
+            // the following options have been added to fill in perimeter holes.
+            .setDilateSize(10)       // Expand blobs to fill any divots on the edges
+            .setErodeSize(10)        // Shrink blobs back to original size
+            .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.OPENING)
+
+            .build();
+
+    public ColorBlobLocatorProcessor oldcolorLocator2 = new ColorBlobLocatorProcessor.Builder()
+            .setTargetColorRange(ColorRange.ARTIFACT_GREEN)// Use a predefined color match
+            .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
+            .setRoi(previousFrame)
+            //asUnityCenterCoordinates(-0.75, 0.75, 0.75, -0.75))
+            .setDrawContours(true)   // Show contours on the Stream Preview
+            //.setBoxFitColor(0)       // Disable the drawing of rectangles
+            //.setEnclosingCircleColor(0)
+            .setCircleFitColor(Color.rgb(0, 255, 255)) // Draw a circle
+            .setBlurSize(3)          // Smooth the transitions between different colors in image
+            // the following options have been added to fill in perimeter holes.
+            .setDilateSize(10)       // Expand blobs to fill any divots on the edges
+            .setErodeSize(10)        // Shrink blobs back to original size
+            .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.OPENING)
+
+            .build();
+    public List<ColorBlobLocatorProcessor.Blob> rightPurple = colorLocator.getBlobs();
+    public List<ColorBlobLocatorProcessor.Blob> rightGreen = colorLocator2.getBlobs();
+    public List<ColorBlobLocatorProcessor.Blob> leftPurple = oldcolorLocator.getBlobs();
+    public List<ColorBlobLocatorProcessor.Blob> leftGreen = oldcolorLocator2.getBlobs();
+    public int rightBlobs = rightPurple.size() + rightGreen.size();
+    public int leftBlobs = leftPurple.size() + leftGreen.size();
+    public int storedBlobs = 0;
+    public int blobCount = storedBlobs + leftBlobs;
 
     enum Colors {
         PURPLE,
@@ -184,6 +226,8 @@ public class GreenFN {
     public List<AprilTagDetection> detections;
 
     public Timer shotTimer;
+    //public Timer stopwatch;
+    private ElapsedTime stopwatch = new ElapsedTime();
     public double recentShotTime = 0;
     public static Pose fromApriltag = new Pose(0, 0, 0);
     public static double modifiedShooterRPM = shooterTarget;
@@ -340,6 +384,10 @@ public class GreenFN {
                 ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, 1000, 150000));
         colorLocator2.addFilter(new ColorBlobLocatorProcessor.BlobFilter(
                 ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, 1000, 150000));
+        oldcolorLocator.addFilter(new ColorBlobLocatorProcessor.BlobFilter(
+                ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, 1000, 150000));
+        oldcolorLocator2.addFilter(new ColorBlobLocatorProcessor.BlobFilter(
+                ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, 1000, 150000));
         visionPortal = new VisionPortal.Builder()
             .setCamera(webcam1)
             .setCameraResolution(cameraResolution)
@@ -347,6 +395,8 @@ public class GreenFN {
             .build();
         visionPortal.resumeStreaming();
         visionPortal.resumeLiveView();
+
+
     }
 
     /**
@@ -428,11 +478,32 @@ public class GreenFN {
         if(toUpdateSlots) {
             updateSlotDetection();
         }
-//
-//        detectedTags = aprilTag.getDetections();
-//        colorLocator.getBlobs();
-//        colorLocator2.getBlobs();
-   }
+        if (auto && stopwatch.milliseconds() >= 5 && stopwatch.milliseconds() <= 7) {
+            visionPortal.setProcessorEnabled(colorLocator, true);
+            visionPortal.setProcessorEnabled(colorLocator2, true);
+            visionPortal.setProcessorEnabled(oldcolorLocator, true);
+            visionPortal.setProcessorEnabled(oldcolorLocator2, true);
+        }
+        //change to heading target heading =
+        // (arccosin(distance from camera to specific point on classifier at the right pose /
+        // vertical distance from camera to classifier))
+        //else if (auto && Math.toDegrees(g.getPose().getHeading()) >= target heading - 2 &&
+        //g.getPose().getHeading() <= target heading + 2) {}
+        else if (auto && stopwatch.milliseconds() >= 8 && stopwatch.milliseconds() <= 10) {
+            visionPortal.setProcessorEnabled(colorLocator, true);
+            visionPortal.setProcessorEnabled(colorLocator2, true);
+            visionPortal.setProcessorEnabled(oldcolorLocator, true);
+            visionPortal.setProcessorEnabled(oldcolorLocator2, true);
+            storedBlobs = storedBlobs + rightBlobs;
+        }
+        else {
+            visionPortal.setProcessorEnabled(colorLocator, false);
+            visionPortal.setProcessorEnabled(colorLocator2, false);
+            visionPortal.setProcessorEnabled(oldcolorLocator, false);
+            visionPortal.setProcessorEnabled(oldcolorLocator2, false);
+            visionPortal.close();
+        }
+    }
 
     public Pose getPose() {
         return currentPose;

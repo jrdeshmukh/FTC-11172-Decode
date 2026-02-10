@@ -37,17 +37,8 @@ public class SampleAuto extends OpMode {
     public void loop() {
         g.update();
         List<ColorBlobLocatorProcessor.Blob> purple = g.colorLocator.getBlobs();
-//        ColorBlobLocatorProcessor.Util.filterByCriteria(ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA,
-//                100000,
-//                250000,
-//                blobs);
         List<ColorBlobLocatorProcessor.Blob> green = g.colorLocator2.getBlobs();
-//        ColorBlobLocatorProcessor.Util.filterByCriteria(ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA,
-//                75000,
-//                250000,
-//                blobs2);
-        //int blobCount = purple.size() + green.size();
-        int blobCount = g.colorLocator.getBlobs().size() + g.colorLocator2.getBlobs().size();
+        int blobCount = purple.size() + green.size();
         Size myBoxFitSize;
         for(ColorBlobLocatorProcessor.Blob b : purple)
         {
