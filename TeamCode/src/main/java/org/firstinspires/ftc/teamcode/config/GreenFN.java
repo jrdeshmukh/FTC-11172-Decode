@@ -52,7 +52,7 @@ public class GreenFN {
     public static double shooterCloseRPM = 645;
     public static double shooterAutoRPM = 668;
     private static final Logger log = LoggerFactory.getLogger(GreenFN.class);
-    public static double intakeRPM = 600;
+    public static double intakeRPM = 1300;
     public static double closeHoodAngle = 80;
     WebcamName webcam1;
     private VisionPortal visionPortal;
@@ -230,7 +230,7 @@ public class GreenFN {
     private ElapsedTime stopwatch = new ElapsedTime();
     public double recentShotTime = 0;
     public static Pose fromApriltag = new Pose(0, 0, 0);
-    public static double modifiedShooterRPM = shooterTarget;
+    public static double modifiedShooterRPM = shooterTarget, modifiedIntakeRPM = intakeTarget;
 
     // 🔧 Camera position offsets relative to robot center (in inches)
     public static final double CAMERA_X_OFFSET = 2.2;
@@ -461,9 +461,12 @@ public class GreenFN {
 
         if (!loaded) {
             modifiedShooterRPM = 0;
+            modifiedIntakeRPM = intakeRPM;
+
         }
         if (loaded) {
             modifiedShooterRPM = shooterTarget;
+            modifiedIntakeRPM = intakeTarget-1000;
         }
 
         if (currentMotif == null && detect) {
@@ -478,31 +481,31 @@ public class GreenFN {
         if(toUpdateSlots) {
             updateSlotDetection();
         }
-        if (auto && stopwatch.milliseconds() >= 5 && stopwatch.milliseconds() <= 7) {
-            visionPortal.setProcessorEnabled(colorLocator, true);
-            visionPortal.setProcessorEnabled(colorLocator2, true);
-            visionPortal.setProcessorEnabled(oldcolorLocator, true);
-            visionPortal.setProcessorEnabled(oldcolorLocator2, true);
-        }
-        //change to heading target heading =
-        // (arccosin(distance from camera to specific point on classifier at the right pose /
-        // vertical distance from camera to classifier))
-        //else if (auto && Math.toDegrees(g.getPose().getHeading()) >= target heading - 2 &&
-        //g.getPose().getHeading() <= target heading + 2) {}
-        else if (auto && stopwatch.milliseconds() >= 8 && stopwatch.milliseconds() <= 10) {
-            visionPortal.setProcessorEnabled(colorLocator, true);
-            visionPortal.setProcessorEnabled(colorLocator2, true);
-            visionPortal.setProcessorEnabled(oldcolorLocator, true);
-            visionPortal.setProcessorEnabled(oldcolorLocator2, true);
-            storedBlobs = storedBlobs + rightBlobs;
-        }
-        else {
-            visionPortal.setProcessorEnabled(colorLocator, false);
-            visionPortal.setProcessorEnabled(colorLocator2, false);
-            visionPortal.setProcessorEnabled(oldcolorLocator, false);
-            visionPortal.setProcessorEnabled(oldcolorLocator2, false);
-            visionPortal.close();
-        }
+//        if (auto && stopwatch.milliseconds() >= 5 && stopwatch.milliseconds() <= 7) {
+//            visionPortal.setProcessorEnabled(colorLocator, true);
+//            visionPortal.setProcessorEnabled(colorLocator2, true);
+//            visionPortal.setProcessorEnabled(oldcolorLocator, true);
+//            visionPortal.setProcessorEnabled(oldcolorLocator2, true);
+//        }
+//        //change to heading target heading =
+//        // (arccosin(distance from camera to specific point on classifier at the right pose /
+//        // vertical distance from camera to classifier))
+//        //else if (auto && Math.toDegrees(g.getPose().getHeading()) >= target heading - 2 &&
+//        //g.getPose().getHeading() <= target heading + 2) {}
+//        else if (auto && stopwatch.milliseconds() >= 8 && stopwatch.milliseconds() <= 10) {
+//            visionPortal.setProcessorEnabled(colorLocator, true);
+//            visionPortal.setProcessorEnabled(colorLocator2, true);
+//            visionPortal.setProcessorEnabled(oldcolorLocator, true);
+//            visionPortal.setProcessorEnabled(oldcolorLocator2, true);
+//            storedBlobs = storedBlobs + rightBlobs;
+//        }
+//        else {
+//            visionPortal.setProcessorEnabled(colorLocator, false);
+//            visionPortal.setProcessorEnabled(colorLocator2, false);
+//            visionPortal.setProcessorEnabled(oldcolorLocator, false);
+//            visionPortal.setProcessorEnabled(oldcolorLocator2, false);
+//            visionPortal.close();
+//        }
     }
 
     public Pose getPose() {

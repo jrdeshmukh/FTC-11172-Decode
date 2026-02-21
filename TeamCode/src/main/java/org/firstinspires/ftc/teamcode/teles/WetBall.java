@@ -234,7 +234,7 @@ public class WetBall extends OpMode {
 //            }
 //        }
 
-        if(gamepad1.left_trigger>0.05F || gamepad2.left_trigger>0.05F || gamepad2.right_bumper) {
+        if(gamepad1.left_trigger>0.05F || gamepad2.left_trigger>0.05F || gamepad2.right_bumper || gamepad2.right_trigger>0.05F) {
             GreenFN.intakeTarget=GreenFN.intakeRPM;
 //            g.toUpdateSlots = true;
         }

@@ -23,9 +23,11 @@ import com.pedropathing.telemetry.SelectableOpMode;
 import com.pedropathing.util.*;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is the Tuning class. It contains a selection menu for various tuning OpModes.
@@ -526,16 +528,20 @@ class LateralVelocityTuner extends OpMode {
  */
 class ForwardZeroPowerAccelerationTuner extends OpMode {
     private final ArrayList<Double> accelerations = new ArrayList<>();
-    public static double VELOCITY = 55;
+    public static double VELOCITY = 60;
 
     private double previousVelocity;
     private long previousTimeNano;
+    public static ElapsedTime timer;
 
+    public static double time;
     private boolean stopping;
     private boolean end;
 
     @Override
-    public void init() {}
+    public void init() {
+        timer = new ElapsedTime();
+    }
 
     /** This initializes the drive motors as well as the Panels telemetryM. */
     @Override
@@ -556,6 +562,7 @@ class ForwardZeroPowerAccelerationTuner extends OpMode {
         follower.startTeleopDrive(false);
         follower.update();
         follower.setTeleOpDrive(1,0,0,true);
+        timer.reset();
     }
 
     /**
@@ -582,6 +589,7 @@ class ForwardZeroPowerAccelerationTuner extends OpMode {
                     previousTimeNano = System.nanoTime();
                     stopping = true;
                     follower.setTeleOpDrive(0,0,0,true);
+                    time = timer.time(TimeUnit.SECONDS);
                 }
             } else {
                 double currentVelocity = follower.getVelocity().dot(heading);
@@ -600,6 +608,7 @@ class ForwardZeroPowerAccelerationTuner extends OpMode {
             average /= accelerations.size();
 
             telemetryM.debug("Forward Zero Power Acceleration (Deceleration): " + average);
+            telemetryM.debug("Time to reach velocity: ", time);
             telemetryM.debug("\n");
             telemetryM.debug("Press A to set the Forward Zero Power Acceleration temporarily (while robot remains on).");
             telemetryM.update(telemetry);
