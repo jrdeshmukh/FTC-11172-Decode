@@ -350,6 +350,7 @@ public class OldRedAuto extends LinearOpMode {
         g.loadStoppers();
         g.follower.setStartingPose(startPose);
         g.follower.setPose(startPose);
+        g.inAuto = true;
 //        VectorCalculator.headingPIDFSwitch = 0.262;
 
 

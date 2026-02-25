@@ -57,11 +57,12 @@ public class WetBall extends OpMode {
     Pose startPose = new Pose(0,0,0);
     Pose launchPose = new Pose(), farPose = new Pose();
     Pose intakePose = new Pose();
-    public static PIDFController headingPIDF;
+    public static PIDFController headingPIDF, secondaryHeadingPIDF;
     Timer loopTimer;
     public static double headingLockTolerance = 0.007;
     public static double hp = 0.7 , hi = 0, hd=0.09, hf=0.01;
-    public static double shotTime = 0.8;
+    public static double h2p = 1.2, h2i = 0, h2d = 0.12, h2f = 0.03;
+    public static double shotTime = 0.6;
     double lastLoopTime;
     Pose goalPose = new Pose(0,0,0);
     double[] xvelo = new double[20];
@@ -128,6 +129,8 @@ public class WetBall extends OpMode {
         gp1 = new BBG(gamepad1);
         gp2 = new BBG(gamepad2);
 
+        GreenFN.detect = false;
+
         if(GreenFN.side== BLUE) {
 //            g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
             goalPose = new Pose(133, 9.5);
@@ -149,10 +152,11 @@ public class WetBall extends OpMode {
 
 
         headingPIDF = new PIDFController(new PIDFCoefficients(hp, hi, hd, hf));
+        secondaryHeadingPIDF = new PIDFController(new PIDFCoefficients(h2p, h2i, h2d, h2f));
         loopTimer = new Timer();
         lastLoopTime = loopTimer.getElapsedTimeSeconds();
         GreenFN.minTimeBtwnShots = 0.2;
-        GreenFN.intakeRPM = 700;
+        GreenFN.intakeRPM = 1300;
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
@@ -180,7 +184,7 @@ public class WetBall extends OpMode {
     public void loop() {
         g.update();
 //        goal = g.getVisibleGoalPose();
-        double sprint = gamepad1.dpad_up?0.2:1;
+        double sprint = gp1.x()?0.5:1;
 
         if(!balls) {
             isBalls3 = false;
@@ -190,17 +194,18 @@ public class WetBall extends OpMode {
             g.follower.setPose(g.getPose().copy().setHeading(0));
             lastHeading = 0;
         }
+
 //blue right middle left, red left middle right
         if(gp1.right_trigger()) {
             if(GreenFN.side == BLUE) {
-                g.shoot(3);
-                g.shoot(2);
                 g.shoot(1);
+                g.shoot(2);
+                g.shoot(3);
             }
             else {
-                g.shoot(1);
-                g.shoot(2);
                 g.shoot(3);
+                g.shoot(2);
+                g.shoot(1);
             }
             balls= false;
         }
@@ -211,7 +216,7 @@ public class WetBall extends OpMode {
 
         if(gp2.left_bumper()) {g.intakeStoppers();}
         if(gp2.right_bumper()) {
-            g.loadStoppers(); balls = false; GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
+            g.loadStoppers(); balls = false;
         }
         if(gamepad2.right_bumper) {
             GreenFN.intakeTarget = GreenFN.intakeRPM;
@@ -220,7 +225,16 @@ public class WetBall extends OpMode {
             GreenFN.intakeTarget = 0;
         }
         if(gp2.a()) {
-            g.loaded = true;
+            if(g.hoodUp) {
+                g.setHoodDown();
+                g.inAuto = true;
+                GreenFN.shooterTarget = GreenFN.shooterFarRPM;
+                GreenFN.minTimeBtwnShots = 0.75;
+            }
+            else {
+                g.setHoodUp();
+                g.inAuto = false;
+            }
         }
 //        if(gp1.left_trigger==0) {
 //            GreenFN.intakeTarget = 0;
@@ -234,7 +248,7 @@ public class WetBall extends OpMode {
 //            }
 //        }
 
-        if(gamepad1.left_trigger>0.05F || gamepad2.left_trigger>0.05F || gamepad2.right_bumper || gamepad2.right_trigger>0.05F) {
+        if(gamepad1.left_trigger>0.05F || gamepad2.left_trigger>0.05F || gamepad2.right_bumper) {
             GreenFN.intakeTarget=GreenFN.intakeRPM;
 //            g.toUpdateSlots = true;
         }
@@ -271,7 +285,7 @@ public class WetBall extends OpMode {
             }
         }
 
-        if(gamepad2.right_trigger>0.05F) {
+        if(gamepad2.right_trigger>0.05F || gamepad1.ps) {
             GreenFN.intakeTarget = -GreenFN.intakeRPM;
             balls = false;
         }
@@ -280,19 +294,21 @@ public class WetBall extends OpMode {
 //            GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
 //        }
 
-        if (gp2.dpad_up()) {
-            GreenFN.shooterTarget = GreenFN.shooterFarRPM;
-        }
+//        if (gp2.dpad_up()) {
+//            GreenFN.shooterTarget = GreenFN.shooterFarRPM;
+//        }
+//
+//        if (gp2.dpad_down()) {
+//            g.stopper1.setPosition(0);
+//            g.stopper2.setPosition(0);
+//            g.stopper3.setPosition(0);
+//            g.stopper1.setPosition(GreenFN.stopperShoot);
+//            g.stopper2.setPosition(GreenFN.stopperShoot);
+//            g.stopper3.setPosition(GreenFN.stopperShoot);
+//        }
 
-        if (gp2.dpad_down()) {
-            g.stopper1.setPosition(0);
-            g.stopper2.setPosition(0);
-            g.stopper3.setPosition(0);
-            g.stopper1.setPosition(GreenFN.stopperShoot);
-            g.stopper2.setPosition(GreenFN.stopperShoot);
-            g.stopper3.setPosition(GreenFN.stopperShoot);
-        }
-
+        if(gp2.dpad_down()) GreenFN.regressionOffset -= 1;
+        if(gp2.dpad_up()) GreenFN.regressionOffset += 1;
 
 
         if(gp1.a()) {
@@ -303,7 +319,7 @@ public class WetBall extends OpMode {
             }
             else{
                 g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
-                goalPose = new Pose(133, 9.5);
+                goalPose = new Pose(131, 8);
             }
 //            if(side==Side.RED) {
 
@@ -314,9 +330,9 @@ public class WetBall extends OpMode {
 //            }
         }
 
-        if(gp1.x()) {
-            intakePose = g.getPose();
-        }
+//        if(gp1.x()) {
+//            intakePose = g.getPose();
+//        }
 
         if (gp1.b()) {
             farPose = g.getPose();
@@ -402,11 +418,11 @@ public class WetBall extends OpMode {
 //                    )
 //            );
 //        }
-
-        if(gp1.ps || gp1.touchpad) {
-            runningActions = new ArrayList<>();
-
-        }
+//
+//        if(gp1.ps || gp1.touchpad) {
+//            runningActions = new ArrayList<>();
+//
+//        }
 
 
         TelemetryPacket packet = new TelemetryPacket();
@@ -458,53 +474,66 @@ public class WetBall extends OpMode {
         gpx = goalPose.getX()-xVelPred*shotTime;
         gpy = goalPose.getY()-yVelPred*shotTime;
 
+        g.currentDistance = g.getPose().distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
+
+
 
         boolean usingApriltag = false;
         AprilTagDetection tag = null;
         if(targetHeading) {
-                if(!g.detections.isEmpty() && Math.abs(g.follower.getVelocity().getXComponent()) < 10 && Math.abs(g.follower.getVelocity().getYComponent()) < 10) {
-                    if (GreenFN.side == RED) {
-                        for (AprilTagDetection detection : g.detections) {
-                            telemetry.addData("detection id: ", detection.id);
-                            if (detection.id == 24) {
-                                usingApriltag = true;
-                                tag = detection;
-                                double distance = g.getPose().distanceFrom(goalPose);
-                                double idealBearing = Math.asin((cameraRedOffset)/(distance-cameraDist));
-                                lastHeading = g.follower.getHeading() - Math.toRadians(detection.ftcPose.bearing)-idealBearing;
-//                                hp = 0.5;
-//                                headingPIDF.setCoefficients(new PIDFCoefficients(hp, hi, hd, hf));
-//                                headingOffset = lastHeading - Math.atan2(gpy - g.getPose().getY(), gpx - g.getPose().getX()) + Math.toRadians(90);
-                            }
-                        }
-                    } else if (GreenFN.side == BLUE) {
-                        for (AprilTagDetection detection : g.detections) {
-                            if (detection.id == 20) {
-                                usingApriltag = true;
-                                tag = detection;
-//                                hp = 0.5;
-//                                headingPIDF.setCoefficients(new PIDFCoefficients(hp, hi, hd, hf));
-                                double distance = g.getPose().distanceFrom(goalPose);
-                                double idealBearing = Math.asin((cameraBlueOffset)/(distance-cameraDist));
-                                lastHeading = g.follower.getHeading() - Math.toRadians(detection.ftcPose.bearing)-idealBearing;//                                headingOffset = lastHeading - Math.atan2(gpy - g.getPose().getY(), gpx - g.getPose().getX()) + Math.toRadians(90);
-                            }
-                        }
-                    }
-                }
-            else {
+//                if(!g.detections.isEmpty() && Math.abs(g.follower.getVelocity().getXComponent()) < 10 && Math.abs(g.follower.getVelocity().getYComponent()) < 10) {
+//                    if (GreenFN.side == RED) {
+//                        for (AprilTagDetection detection : g.detections) {
+//                            telemetry.addData("detection id: ", detection.id);
+//                            if (detection.id == 24) {
+//                                usingApriltag = true;
+//                                tag = detection;
+//                                double distance = g.getPose().distanceFrom(goalPose);
+//                                double idealBearing = Math.asin((cameraRedOffset)/(distance-cameraDist));
+//                                lastHeading = g.follower.getHeading() - Math.toRadians(detection.ftcPose.bearing)-idealBearing;
+////                                hp = 0.5;
+////                                headingPIDF.setCoefficients(new PIDFCoefficients(hp, hi, hd, hf));
+////                                headingOffset = lastHeading - Math.atan2(gpy - g.getPose().getY(), gpx - g.getPose().getX()) + Math.toRadians(90);
+//                            }
+//                        }
+//                    } else if (GreenFN.side == BLUE) {
+//                        for (AprilTagDetection detection : g.detections) {
+//                            if (detection.id == 20) {
+//                                usingApriltag = true;
+//                                tag = detection;
+////                                hp = 0.5;
+////                                headingPIDF.setCoefficients(new PIDFCoefficients(hp, hi, hd, hf));
+//                                double distance = g.getPose().distanceFrom(goalPose);
+//                                double idealBearing = Math.asin((cameraBlueOffset)/(distance-cameraDist));
+//                                lastHeading = g.follower.getHeading() - Math.toRadians(detection.ftcPose.bearing)-idealBearing;//                                headingOffset = lastHeading - Math.atan2(gpy - g.getPose().getY(), gpx - g.getPose().getX()) + Math.toRadians(90);
+//                            }
+//                        }
+//                    }
+//                }
+//            else {
 //                    hp = 1;
 //                    headingPIDF.setCoefficients(new PIDFCoefficients(hp, hi, hd, hf));
-                if(Math.abs(xVelPred)<10&&Math.abs(yVelPred)<10) {
+//                if(Math.abs(xVelPred)<10&&Math.abs(yVelPred)<10) {
+//                    lastHeading = Math.atan2(gpy-g.getPose().getY(), gpx-g.getPose().getX())+Math.toRadians(90)+Math.toRadians(headingOffset);
+//
+//                }
+//                else{
                     lastHeading = Math.atan2(gpy-g.getPose().getY(), gpx-g.getPose().getX())+Math.toRadians(90)+Math.toRadians(headingOffset);
-
-                }
-                else{
-                    lastHeading = Math.atan2(gpy-g.getPose().getY(), gpx-g.getPose().getX())+Math.toRadians(90);
-                }
-            }
+//                }
+//            }
         }
+
+        if(gamepad1.dpad_up) {
+            double currentHeadingDeg = Math.toDegrees(MathFunctions.normalizeAngle(g.getPose().getHeading()));
+            double snappedDeg = Math.round(currentHeadingDeg / 90.0) * 90.0;
+            lastHeading = MathFunctions.normalizeAngle(Math.toRadians(snappedDeg));
+            targetHeading = true;
+        }
+
         if(gamepad1.left_bumper) {
             lastHeading = Math.atan2(startPose.getY()-g.getPose().getY(), startPose.getX()-g.getPose().getX());
+            g.loadStoppers();
+//            GreenFN.shooterTarget = GreenFN.shooterCloseRPM;
             targetHeading = true;
         }
 
@@ -518,7 +547,7 @@ public class WetBall extends OpMode {
                 headingLock = true;
             }
             if(Math.abs(gamepad1.right_stick_x) > 0.01) {
-                headingPower = -gamepad1.right_stick_x * 0.75 * sprint;
+                headingPower = -gamepad1.right_stick_x * sprint;
 //                sprint = 1;
                 headingLock = false; // temporarily release heading lock while turning
             }
@@ -529,13 +558,21 @@ public class WetBall extends OpMode {
             if(headingLock) {
                 headingError = MathFunctions.getTurnDirection(g.getPose().getHeading(), lastHeading) *
                         MathFunctions.getSmallestAngleDifference(g.getPose().getHeading(), lastHeading);
+
                 headingPIDF.updateFeedForwardInput(MathFunctions.getTurnDirection(g.getPose().getHeading(), lastHeading));
                 headingPIDF.updateError(headingError);
+                secondaryHeadingPIDF.updateFeedForwardInput(MathFunctions.getTurnDirection(g.getPose().getHeading(), lastHeading));
+                secondaryHeadingPIDF.updateError(headingError);
                 headingPower = headingPIDF.run();
+                if(headingError < Math.PI / 20) {
+                    headingPower = secondaryHeadingPIDF.run();
+                }
             }
 
-            g.follower.setTeleOpDrive(-gamepad1.left_stick_y  * sprint, -gamepad1.left_stick_x * sprint * 1.27, headingPower, false);
+            g.follower.setTeleOpDrive(-gamepad1.left_stick_y  * sprint, -gamepad1.left_stick_x * sprint * 1.27f, headingPower, false);
+            g.fifthWheel.setPower(g.follower.getTeleopDriveVector().getYComponent());
         }
+
 
 
         runningActions = newActions;
@@ -588,6 +625,9 @@ public class WetBall extends OpMode {
         telemetry.addData("range" , goal==null?null:(goal.ftcPose.range));
         telemetry.addData("pitch: ", goal==null?null:goal.ftcPose.pitch);
         telemetry.addData("pose range: ", g.getPose().distanceFrom(goalPose));
+//        telemetry.addData("myNewX: ", myNewX);
+//        telemetry.addData("myNewY: ", myNewY);
+        telemetry.addData("shotTime: ", shotTime);
         telemetry.addData("rpm reg: ", GreenFN.getRPMreg( g.getPose().distanceFrom(goalPose)));
         telemetry.addData("range adjustment: ", goal==null?null: goal.ftcPose.range*Math.cos(Math.toRadians(goal.ftcPose.pitch)));
         telemetry.addData("adjustedx: ", g.getPoseFromApriltag().getX());

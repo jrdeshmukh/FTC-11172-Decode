@@ -30,6 +30,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.autos.OldBlueAuto;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -52,7 +53,7 @@ public class GreenFN {
     public static double shooterCloseRPM = 645;
     public static double shooterAutoRPM = 668;
     private static final Logger log = LoggerFactory.getLogger(GreenFN.class);
-    public static double intakeRPM = 1300;
+    public static double intakeRPM = 4000;
     public static double closeHoodAngle = 80;
     WebcamName webcam1;
     private VisionPortal visionPortal;
@@ -156,12 +157,12 @@ public class GreenFN {
     public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
     PIDController shooterController1, shooterController2, intakeController;
     public static double intakekP = 0.002, intakekI = 0, intakekD = 0.00, shooterkP = 0.025, shooterkI = 0.0, shooterkD = 0.0001, intakeKF = 0.0009, shooterkF = 0.00024;
-    public DcMotorEx shooter1, shooter2, intake;
+    public DcMotorEx shooter1, shooter2, intake, fifthWheel;
 //    public NormalizedColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
     public static double shooterTarget = 0, intakeTarget = 0;
     public static double actualShooterCloseRPM = 810;
-    public static double shooterFarRPM = 1100;
+    public static double shooterFarRPM = 930;
 
     public static double[] distances = new double[3];
     public static NormalizedRGBA[] colors = new NormalizedRGBA[3];
@@ -177,8 +178,12 @@ public class GreenFN {
 
     public double adjustedX = 0, adjustedY = 0;
 
+    public boolean inAuto = false;
 
-    public Servo stopper1, stopper2, stopper3;
+    public static int regressionOffset = 3;
+
+
+    public Servo stopper1, stopper2, stopper3, hood1, hood2;
     public Follower follower;
 
     public static double minTimeBtwnShots = 0.52;
@@ -192,6 +197,8 @@ public class GreenFN {
     public Pose currentPose = new Pose(0, 0, 0);
     public double angvel = 0;
 
+    public boolean hoodUp = true;
+
     // --- Heading Lock Variables ---
     private boolean headingLockEnabled = false;
     private double lockedHeading = 0;
@@ -204,6 +211,8 @@ public class GreenFN {
     public static double stopper3Load = 0.39;
     public static double stopper1Intake = 0.54, stopper2Intake = 0.59;// 0.655,
     public static double stopper3Intake = 0.62;
+
+    public double hood1down = 0.38, hood2down = 0.74, hood1up = 0.52, hood2up = 0.6;
 
     public double stop1pos, stop2pos, stop3pos;
 
@@ -224,6 +233,7 @@ public class GreenFN {
     public int colorCounter = 0;
     public static boolean detect = true;
     public List<AprilTagDetection> detections;
+    public double currentDistance = new Pose(OldBlueAuto.launchPoseX, OldBlueAuto.launchPoseY).distanceFrom(new Pose(133, 144-9.5));
 
     public Timer shotTimer;
     //public Timer stopwatch;
@@ -357,6 +367,10 @@ public class GreenFN {
         stopper1 = map.servo.get("stopper1");
         stopper2 = map.servo.get("stopper2");
         stopper3 = map.servo.get("stopper3");
+        hood1 = map.servo.get("hood1");
+        hood2 = map.servo.get("hood2");
+
+        fifthWheel = map.get(DcMotorEx.class, "fifthWheel");
 
 
         shotTimer = new Timer();
@@ -409,6 +423,8 @@ public class GreenFN {
         currentPose = follower.getPose();
         angvel = follower.poseTracker.getAngularVelocity();
 
+
+
         follower.update();
 
         iv = intake.getVelocity(AngleUnit.DEGREES);
@@ -460,7 +476,7 @@ public class GreenFN {
 
 
         if (!loaded) {
-            modifiedShooterRPM = 0;
+//            modifiedShooterRPM = 0;
             modifiedIntakeRPM = intakeRPM;
 
         }
@@ -473,6 +489,19 @@ public class GreenFN {
             updateAprilTagDetection();
 
         }
+        if(modifiedShooterRPM !=0 && !inAuto) {
+            modifiedShooterRPM = getRPMreg(currentDistance);
+            if(modifiedShooterRPM < 600) modifiedShooterRPM = 600;
+            if(modifiedShooterRPM > 820) modifiedShooterRPM = 820;
+            minTimeBtwnShots = 0.001*modifiedShooterRPM-0.45;
+            if(minTimeBtwnShots < 0.2) {
+                minTimeBtwnShots = 0.2;
+            }
+            if(minTimeBtwnShots > 0.5) {
+                minTimeBtwnShots = 0.5;
+            }
+        }
+
         colorSensorUpdated = false;
         if(toUpdateColorSensor) {
             updateColorSensor();
@@ -510,6 +539,17 @@ public class GreenFN {
 
     public Pose getPose() {
         return currentPose;
+    }
+
+    public void setHoodDown() {
+        hood1.setPosition(hood1down);
+        hood2.setPosition(hood2down);
+        hoodUp = false;
+    }
+    public void setHoodUp() {
+        hood2.setPosition(hood2up);
+        hood1.setPosition(hood1up);
+        hoodUp = true;
     }
 
     public void intakeStoppers() {
@@ -778,7 +818,8 @@ public class GreenFN {
     }
 
     public static double getRPMreg(double range) {
-        return 0.0692362*range*range-3.38259*range+718.12462;
+//        return 0.0692362*range*range-3.38259*range+718.12462;
+        return 0.0384018*range*range-1.53268*range+612.30815 + regressionOffset;
     }
 
     public static Pose convertToFieldPosition2(AprilTagDetection detection) {

@@ -341,6 +341,7 @@ public class OldBlueAuto extends LinearOpMode {
         GreenFN.side = GreenFN.Sides.BLUE;
         g.follower.setStartingPose(startPose);
         g.follower.setPose(startPose);
+        g.inAuto = true;
         GreenFN.minTimeBtwnShots = 0.7;
 
 

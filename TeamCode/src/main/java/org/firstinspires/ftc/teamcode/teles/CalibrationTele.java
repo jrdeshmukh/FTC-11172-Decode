@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.config.BBG;
 import org.firstinspires.ftc.teamcode.config.GreenFN;
 
-@Config
+@Config()
 @TeleOp
 public class CalibrationTele extends OpMode {
 
@@ -17,6 +17,8 @@ public class CalibrationTele extends OpMode {
     public static double stopperPos;
     public static double increment = 0.01;
     public static double rpmIncrement = 50;
+    public double hood1Pos, hood2Pos;
+    public static double hood1target = 0.5, hood2target = 0.5;
     @Override
     public void init() {
         g = new GreenFN(hardwareMap);
@@ -50,6 +52,21 @@ public class CalibrationTele extends OpMode {
             g.stopper3.setPosition(stopperPos-increment);
         }
 
+//        if(gp2.dpad_down()) {
+//            g.hood1.setPosition(hood1Pos + increment);
+//            g.hood2.setPosition(hood2Pos + increment);
+//        }
+//        if(gp2.dpad_up()) {
+//            g.hood1.setPosition(hood1Pos - increment);
+//            g.hood2.setPosition(hood2Pos + increment);
+//        }
+//
+        hood1Pos = g.hood1.getPosition();
+        hood2Pos = g.hood2.getPosition();
+
+        g.hood1.setPosition(hood1target);
+        g.hood2.setPosition(hood2target);
+
         g.intake.setPower(gamepad2.left_stick_y);
         g.shooter1.setPower(gamepad2.right_stick_y);
         g.shooter2.setPower(gamepad2.right_stick_y);
@@ -79,6 +96,8 @@ public class CalibrationTele extends OpMode {
         telemetry.addData("slot1: ", GreenFN.ballColors[0]);
         telemetry.addData("slot2: ", GreenFN.ballColors[1]);
         telemetry.addData("slot3: ", GreenFN.ballColors[2]);
+        telemetry.addData("hood1: ", hood1Pos);
+        telemetry.addData("hood2: ", hood2Pos);
         telemetry.update();
     }
 }
