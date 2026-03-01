@@ -130,6 +130,7 @@ public class WetBall extends OpMode {
         gp2 = new BBG(gamepad2);
 
         GreenFN.detect = false;
+        GreenFN.inAuto = false;
 
         if(GreenFN.side== BLUE) {
 //            g.follower.setPose(new Pose(99, 45, g.getPose().getHeading()));
@@ -155,7 +156,7 @@ public class WetBall extends OpMode {
         secondaryHeadingPIDF = new PIDFController(new PIDFCoefficients(h2p, h2i, h2d, h2f));
         loopTimer = new Timer();
         lastLoopTime = loopTimer.getElapsedTimeSeconds();
-        GreenFN.minTimeBtwnShots = 0.2;
+        GreenFN.minTimeBtwnShots = 0.25;
         GreenFN.intakeRPM = 1300;
 
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -184,7 +185,7 @@ public class WetBall extends OpMode {
     public void loop() {
         g.update();
 //        goal = g.getVisibleGoalPose();
-        double sprint = gp1.x()?0.5:1;
+        double sprint = gamepad1.y?0.5:1;
 
         if(!balls) {
             isBalls3 = false;
@@ -285,7 +286,7 @@ public class WetBall extends OpMode {
             }
         }
 
-        if(gamepad2.right_trigger>0.05F || gamepad1.ps) {
+        if(gamepad2.right_trigger>0.05F || gamepad1.dpad_up) {
             GreenFN.intakeTarget = -GreenFN.intakeRPM;
             balls = false;
         }
@@ -356,22 +357,8 @@ public class WetBall extends OpMode {
 //            );
 //        }
 
-        if(gp1.y()) {
-            Path intakePath = new Path(
-                    new BezierLine(
-                            g.getPose(),
-                            intakePose
-                    )
-            );
-            intakePath.setLinearHeadingInterpolation(g.getPose().getHeading(), intakePose.getHeading());
-            runningActions.add(
-                    new SequentialAction(
-                            new InstantAction(() -> g.intakeStoppers()),
-                            g.followUntilDone(
-                                    intakePath
-                            )
-                    )
-            );
+        if(gamepad1.ps) {
+            g.intakeStoppers();
         }
 
 //        if(gamepad2.a) {
@@ -523,7 +510,7 @@ public class WetBall extends OpMode {
 //            }
         }
 
-        if(gamepad1.dpad_up) {
+        if(gamepad1.x) {
             double currentHeadingDeg = Math.toDegrees(MathFunctions.normalizeAngle(g.getPose().getHeading()));
             double snappedDeg = Math.round(currentHeadingDeg / 90.0) * 90.0;
             lastHeading = MathFunctions.normalizeAngle(Math.toRadians(snappedDeg));
