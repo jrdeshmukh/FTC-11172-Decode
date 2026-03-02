@@ -191,6 +191,8 @@ public class WetBall extends OpMode {
             isBalls3 = false;
         }
 
+
+
         if(gp1.dpad_down())  {
             g.follower.setPose(g.getPose().copy().setHeading(0));
             lastHeading = 0;
@@ -462,6 +464,22 @@ public class WetBall extends OpMode {
         gpy = goalPose.getY()-yVelPred*shotTime;
 
         g.currentDistance = g.getPose().distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
+        if(GreenFN.side == RED) {
+            if(g.getPose().getX() >72 && g.getPose().getX() > g.getPose().getY()) {
+                g.currentDistance = new Pose(96, 96).distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
+            }
+            else if (g.getPose().getX() < 72 && g.getPose().getX() < 144-g.getPose().getY()) {
+                g.currentDistance = new Pose(72, 72).distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
+            }
+        }
+        if(GreenFN.side == BLUE) {
+            if(g.getPose().getY() < 72 && g.getPose().getY() < 144-g.getPose().getX()) {
+                g.currentDistance = new Pose(96, 48).distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
+            }
+            else if (g.getPose().getY() > 72 && g.getPose().getY() > g.getPose().getX()) {
+                g.currentDistance = new Pose(72, 72).distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
+            }
+        }
 
 
 
