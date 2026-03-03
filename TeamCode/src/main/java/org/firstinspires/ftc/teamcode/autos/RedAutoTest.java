@@ -42,14 +42,19 @@ public class RedAutoTest extends LinearOpMode {
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
             g.auto = true;
             g.update();
-            telemetry.addData("x: ", g.getPose().getX());
-            telemetry.addData("y: ", g.getPose().getY());
+            g.blobFinding(true);
+//            g.redProcessor();
+//            telemetry.addData("x: ", g.getPose().getX());
+//            telemetry.addData("y: ", g.getPose().getY());
             telemetry.addData("heading: ", Math.toDegrees(g.getPose().getHeading()));
-            telemetry.addData("recentServoShot: ", g.recentServoShot);
-            telemetry.addData("shooterPower: ", g.flywheel1Power);
-            telemetry.addData("shooterTarget: ", g.shooterTarget);
+//            telemetry.addData("recentServoShot: ", g.recentServoShot);
+//            telemetry.addData("shooterPower: ", g.flywheel1Power);
+//            telemetry.addData("shooterTarget: ", g.shooterTarget);
             telemetry.addData("shooter queue: ", g.shooterQueue.toString());
             telemetry.addData("motif: ", GreenFN.currentMotif);
+            telemetry.addData("stored blobs ", g.storedBlobs);
+            telemetry.addData("left blobs ", g.leftBlobs);
+            telemetry.addData("right blobs ", g.rightBlobs);
 
             telemetry.update();
             return true;
@@ -157,10 +162,10 @@ public class RedAutoTest extends LinearOpMode {
     }
     public class ShootInOrder implements Action {
 
-        int row;
+        //int row;
 
         public ShootInOrder(int row) {
-            this.row = row;
+            g.row = row;
         }
 
         @Override
@@ -173,25 +178,25 @@ public class RedAutoTest extends LinearOpMode {
             {
                 RotatedRect boxFit = b.getBoxFit();
                 myBoxFitSize = boxFit.size;
-                telemetry.addData("new purple width", myBoxFitSize.width);
-                telemetry.addData("new purple height", myBoxFitSize.height);
-                telemetry.addData("new purple angle", boxFit.angle);
-                if(myBoxFitSize.width/ myBoxFitSize.height > 3.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.35 ){
+                telemetry.addData("right purple width", myBoxFitSize.width);
+                telemetry.addData("right purple height", myBoxFitSize.height);
+                telemetry.addData("right purple angle", boxFit.angle);
+                if(myBoxFitSize.width/ myBoxFitSize.height >= 3.8 || myBoxFitSize.width/ myBoxFitSize.height <= 0.35 ){
                     g.rightBlobs = g.rightBlobs + 1;
                 }
-                else if (myBoxFitSize.width/ myBoxFitSize.height > 5.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.18) {
+                else if (myBoxFitSize.width/ myBoxFitSize.height >= 5.8 || myBoxFitSize.width/ myBoxFitSize.height <= 0.18) {
                     g.rightBlobs = g.rightBlobs + 2;
                 }
-                else if (myBoxFitSize.width/ myBoxFitSize.height > 7.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.135) {
+                else if (myBoxFitSize.width/ myBoxFitSize.height >= 7.8 || myBoxFitSize.width/ myBoxFitSize.height <= 0.135) {
                     g.rightBlobs = g.rightBlobs + 3;
                 }
-                else if (myBoxFitSize.width/ myBoxFitSize.height > 9.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.11) {
+                else if (myBoxFitSize.width/ myBoxFitSize.height >= 9.8 || myBoxFitSize.width/ myBoxFitSize.height <= 0.11) {
                     g.rightBlobs = g.rightBlobs + 4;
                 }
-                else if (myBoxFitSize.width/ myBoxFitSize.height > 11.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.09) {
+                else if (myBoxFitSize.width/ myBoxFitSize.height >= 11.8 || myBoxFitSize.width/ myBoxFitSize.height <= 0.09) {
                     g.rightBlobs = g.rightBlobs + 5;
                 }
-                else if (myBoxFitSize.width/ myBoxFitSize.height > 13.8 || myBoxFitSize.width/ myBoxFitSize.height < 0.078) {
+                else if (myBoxFitSize.width/ myBoxFitSize.height >= 13.8 || myBoxFitSize.width/ myBoxFitSize.height <= 0.078) {
                     g.rightBlobs = g.rightBlobs + 6;
                 }
             }
@@ -200,25 +205,25 @@ public class RedAutoTest extends LinearOpMode {
             {
                 RotatedRect boxFit = b.getBoxFit();
                 myBoxFitSize2 = boxFit.size;
-                telemetry.addData("new green width", myBoxFitSize2.width);
-                telemetry.addData("new green height", myBoxFitSize2.height);
-                telemetry.addData("new green angle", boxFit.angle);
-                if(myBoxFitSize2.width/ myBoxFitSize2.height > 3.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.35 ){
+                telemetry.addData("right green width", myBoxFitSize2.width);
+                telemetry.addData("right green height", myBoxFitSize2.height);
+                telemetry.addData("right green angle", boxFit.angle);
+                if(myBoxFitSize2.width/ myBoxFitSize2.height >= 3.8 || myBoxFitSize2.width/ myBoxFitSize2.height <= 0.35 ){
                     g.rightBlobs = g.rightBlobs + 1;
                 }
-                else if (myBoxFitSize2.width/ myBoxFitSize2.height > 5.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.18) {
+                else if (myBoxFitSize2.width/ myBoxFitSize2.height >= 5.8 || myBoxFitSize2.width/ myBoxFitSize2.height <= 0.18) {
                     g.rightBlobs = g.rightBlobs + 2;
                 }
-                else if (myBoxFitSize2.width/ myBoxFitSize2.height > 7.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.135) {
+                else if (myBoxFitSize2.width/ myBoxFitSize2.height >= 7.8 || myBoxFitSize2.width/ myBoxFitSize2.height <= 0.135) {
                     g.rightBlobs = g.rightBlobs + 3;
                 }
-                else if (myBoxFitSize2.width/ myBoxFitSize2.height > 9.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.11) {
+                else if (myBoxFitSize2.width/ myBoxFitSize2.height >= 9.8 || myBoxFitSize2.width/ myBoxFitSize2.height <= 0.11) {
                     g.rightBlobs = g.rightBlobs + 4;
                 }
-                else if (myBoxFitSize2.width/ myBoxFitSize2.height > 11.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.09) {
+                else if (myBoxFitSize2.width/ myBoxFitSize2.height >=11.8 || myBoxFitSize2.width/ myBoxFitSize2.height <= 0.09) {
                     g.rightBlobs = g.rightBlobs + 5;
                 }
-                else if (myBoxFitSize2.width/ myBoxFitSize2.height > 13.8 || myBoxFitSize2.width/ myBoxFitSize2.height < 0.078) {
+                else if (myBoxFitSize2.width/ myBoxFitSize2.height >= 13.8 || myBoxFitSize2.width/ myBoxFitSize2.height <= 0.078) {
                     g.rightBlobs = g.rightBlobs + 6;
                 }
             }
@@ -227,25 +232,25 @@ public class RedAutoTest extends LinearOpMode {
             {
                 RotatedRect boxFit = b.getBoxFit();
                 myBoxFitSize3 = boxFit.size;
-                telemetry.addData("new purple width", myBoxFitSize3.width);
-                telemetry.addData("new purple height", myBoxFitSize3.height);
-                telemetry.addData("new purple angle", boxFit.angle);
-                if(myBoxFitSize3.width/ myBoxFitSize3.height > 3.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.35 ){
+                telemetry.addData("left purple width", myBoxFitSize3.width);
+                telemetry.addData("left purple height", myBoxFitSize3.height);
+                telemetry.addData("left purple angle", boxFit.angle);
+                if(myBoxFitSize3.width/ myBoxFitSize3.height >= 3.8 || myBoxFitSize3.width/ myBoxFitSize3.height <= 0.35 ){
                     g.leftBlobs = g.leftBlobs + 1;
                 }
-                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 5.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.18) {
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height >= 5.8 || myBoxFitSize3.width/ myBoxFitSize3.height <= 0.18) {
                     g.leftBlobs = g.leftBlobs + 2;
                 }
-                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 7.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.135) {
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height >= 7.8 || myBoxFitSize3.width/ myBoxFitSize3.height <= 0.135) {
                     g.leftBlobs = g.leftBlobs + 3;
                 }
-                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 9.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.11) {
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height >= 9.8 || myBoxFitSize3.width/ myBoxFitSize3.height <= 0.11) {
                     g.leftBlobs = g.leftBlobs + 4;
                 }
-                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 11.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.09) {
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height >= 11.8 || myBoxFitSize3.width/ myBoxFitSize3.height <= 0.09) {
                     g.leftBlobs = g.leftBlobs + 5;
                 }
-                else if (myBoxFitSize3.width/ myBoxFitSize3.height > 13.8 || myBoxFitSize3.width/ myBoxFitSize3.height < 0.078) {
+                else if (myBoxFitSize3.width/ myBoxFitSize3.height >= 13.8 || myBoxFitSize3.width/ myBoxFitSize3.height <= 0.078) {
                     g.leftBlobs = g.leftBlobs + 6;
                 }
             }
@@ -254,37 +259,37 @@ public class RedAutoTest extends LinearOpMode {
             {
                 RotatedRect boxFit = b.getBoxFit();
                 myBoxFitSize4 = boxFit.size;
-                telemetry.addData("old green width", myBoxFitSize4.width);
-                telemetry.addData("old green height", myBoxFitSize4.height);
-                telemetry.addData("old green angle", boxFit.angle);
-                if(myBoxFitSize4.width/ myBoxFitSize4.height > 3.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.35 ){
+                telemetry.addData("left green width", myBoxFitSize4.width);
+                telemetry.addData("left green height", myBoxFitSize4.height);
+                telemetry.addData("left green angle", boxFit.angle);
+                if(myBoxFitSize4.width/ myBoxFitSize4.height >= 3.8 || myBoxFitSize4.width/ myBoxFitSize4.height <= 0.35 ){
                     g.leftBlobs = g.leftBlobs + 1;
                 }
-                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 5.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.18) {
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height >= 5.8 || myBoxFitSize4.width/ myBoxFitSize4.height <= 0.18) {
                     g.leftBlobs = g.leftBlobs + 2;
                 }
-                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 7.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.135) {
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height >= 7.8 || myBoxFitSize4.width/ myBoxFitSize4.height <= 0.135) {
                     g.leftBlobs = g.leftBlobs + 3;
                 }
-                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 9.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.11) {
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height >= 9.8 || myBoxFitSize4.width/ myBoxFitSize4.height <= 0.11) {
                     g.leftBlobs = g.leftBlobs + 4;
                 }
-                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 11.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.09) {
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height >= 11.8 || myBoxFitSize4.width/ myBoxFitSize4.height <= 0.09) {
                     g.leftBlobs = g.leftBlobs + 5;
                 }
-                else if (myBoxFitSize4.width/ myBoxFitSize4.height > 13.8 || myBoxFitSize4.width/ myBoxFitSize4.height < 0.078) {
+                else if (myBoxFitSize4.width/ myBoxFitSize4.height >= 13.8 || myBoxFitSize4.width/ myBoxFitSize4.height <= 0.078) {
                     g.leftBlobs = g.leftBlobs + 6;
                 }
             }
             if (motif==null) {
                 motif = GreenFN.currentMotif;
             }
-            if(motif==null) {
-                motif = GreenFN.Motifs.PGP;
-            }
+//            if(motif==null) {
+//                motif = GreenFN.Motifs.PGP;
+//            }
             switch(motif) {
                 case GPP:
-                    switch(row) {
+                    switch(g.row) {
                         case 0:
                             g.shoot(2);
                             g.shoot(3);
@@ -410,11 +415,11 @@ public class RedAutoTest extends LinearOpMode {
                     }
                     break;
                 case PGP:
-                    switch(row) {
+                    switch(g.row) {
                         case 0:
-                            g.shoot(1);
-                            g.shoot(2);
                             g.shoot(3);
+                            g.shoot(2);
+                            g.shoot(1);
                             break;
                         case 1:
                             switch(g.blobCount) {
@@ -546,7 +551,7 @@ public class RedAutoTest extends LinearOpMode {
                     }
                     break;
                 case PPG:
-                    switch(row) {
+                    switch(g.row) {
                         case 0:
                             g.shoot(1);
                             g.shoot(3);
@@ -728,8 +733,10 @@ public class RedAutoTest extends LinearOpMode {
 
     public static Pose startPose = new Pose(144-15.0, 118.0, Math.toRadians(218));
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
-    public static Pose launchPose = new Pose(144-launchPoseX, launchPoseY, Math.toRadians(110));
-    public static Pose aprilTagPose = BlueAuto.aprilTagPose.mirror().setHeading(Math.toRadians(200));
+    public static double launchheading = Math.toRadians(126);
+    public static Pose launchPose = new Pose(144- OldBlueAuto.launchPoseX, OldBlueAuto.launchPoseY, launchheading);
+    public static Pose aprilTagPoseOld = new Pose(46.008, 96.996, Math.toRadians(160));
+    public static Pose aprilTagPose = aprilTagPoseOld.mirror().setHeading(Math.toRadians(200));
 
     public static Pose gotoFirstCtrl = mirrorNoHeading(BlueAuto.gotoFirstCtrl);
     public static Pose firstIntakePose = mirrorNoHeading(BlueAuto.firstIntakePose);
@@ -851,6 +858,7 @@ public class RedAutoTest extends LinearOpMode {
         GreenFN.detect = false;
         GreenFN.intakeTarget = 0;
         GreenFN.shooterTarget = 0;
+        GreenFN.currentMotif = null;
 
 
         g.loadStoppers();

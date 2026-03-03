@@ -123,6 +123,7 @@ public class WetBall extends OpMode {
 //            gp1.rumble(1000);
 //            gp2.rumble(1000);
         }
+        g.auto = false;
         g = new GreenFN(hardwareMap);
         g.follower.setStartingPose(startPose);
         g.follower.setPose(startPose);
