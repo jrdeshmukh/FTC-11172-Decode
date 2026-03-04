@@ -50,7 +50,7 @@ public class WetBall extends OpMode {
     double headingError = 0;
     double lastHeading;
     boolean balls = false;
-    public static int loopsPredicted = 1, loopsBack = 1;
+    public static int loopsPredicted = 3, loopsBack = 1;
     List<Action> runningActions = new ArrayList<>();
     Gamepad.RumbleEffect balls2 = new Gamepad.RumbleEffect.Builder().addStep(1, 1, 100).build();
     Gamepad.RumbleEffect balls3 = new Gamepad.RumbleEffect.Builder().addStep(1, 1, 200).addStep(0,0,100).addStep(1,1,200).addStep(0,0,100).addStep(1,1,200).build();
@@ -310,8 +310,8 @@ public class WetBall extends OpMode {
 //            g.stopper3.setPosition(GreenFN.stopperShoot);
 //        }
 
-        if(gp2.dpad_down()) GreenFN.regressionOffset -= 1;
-        if(gp2.dpad_up()) GreenFN.regressionOffset += 1;
+        if(gp2.dpad_down()) g.regressionOffset -= 5;
+        if(gp2.dpad_up()) g.regressionOffset += 5;
 
 
         if(gp1.a()) {
@@ -472,14 +472,14 @@ public class WetBall extends OpMode {
                 g.currentDistance = new Pose(72, 72).distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
             }
         }
-        if(GreenFN.side == BLUE) {
-            if(g.getPose().getY() < 72 && g.getPose().getY() < 144-g.getPose().getX()) {
-                g.currentDistance = new Pose(96, 48).distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
-            }
-            else if (g.getPose().getY() > 72 && g.getPose().getY() > g.getPose().getX()) {
-                g.currentDistance = new Pose(72, 72).distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
-            }
-        }
+//        if(GreenFN.side == BLUE) {
+//            if(g.getPose().getY() < 72 && g.getPose().getY() < 144-g.getPose().getX()) {
+//                g.currentDistance = new Pose(96, 48).distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
+//            }
+//            else if (g.getPose().getY() > 72 && g.getPose().getY() > g.getPose().getX()) {
+//                g.currentDistance = new Pose(72, 72).distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
+//            }
+//        }
 
 
 
@@ -569,7 +569,7 @@ public class WetBall extends OpMode {
                 secondaryHeadingPIDF.updateFeedForwardInput(MathFunctions.getTurnDirection(g.getPose().getHeading(), lastHeading));
                 secondaryHeadingPIDF.updateError(headingError);
                 headingPower = headingPIDF.run();
-                if(headingError < Math.PI / 20) {
+                if(headingError < Math.PI / 20 && g.follower.getVelocity().getMagnitude() < 20) {
                     headingPower = secondaryHeadingPIDF.run();
                 }
             }

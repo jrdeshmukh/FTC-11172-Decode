@@ -180,7 +180,7 @@ public class GreenFN {
 
     public static boolean inAuto = false;
 
-    public static int regressionOffset = 0;
+    public int regressionOffset = 0;
 
 
     public Servo stopper1, stopper2, stopper3, hood1, hood2;
@@ -481,7 +481,7 @@ public class GreenFN {
 
         }
         if (loaded) {
-            modifiedShooterRPM = shooterTarget;
+            modifiedShooterRPM = shooterTarget+regressionOffset;
             modifiedIntakeRPM = intakeTarget-1000;
         }
 
@@ -490,7 +490,7 @@ public class GreenFN {
 
         }
         if(modifiedShooterRPM !=0 && !inAuto) {
-            modifiedShooterRPM = getRPMreg(currentDistance);
+            modifiedShooterRPM = getRPMreg(currentDistance)+regressionOffset;
             if(modifiedShooterRPM < 600) modifiedShooterRPM = 600;
             if(modifiedShooterRPM > 820) modifiedShooterRPM = 820;
 //            minTimeBtwnShots = 0.001*modifiedShooterRPM-0.45;
@@ -819,7 +819,7 @@ public class GreenFN {
 
     public static double getRPMreg(double range) {
 //        return 0.0692362*range*range-3.38259*range+718.12462;
-        return 0.0384018*range*range-1.53268*range+612.30815 + regressionOffset;
+        return 0.0384018*range*range-1.53268*range+612.30815;
     }
 
     public static Pose convertToFieldPosition2(AprilTagDetection detection) {

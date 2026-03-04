@@ -329,7 +329,7 @@ public class NewRedAuto extends LinearOpMode {
 
     public static Pose startPose = new Pose(144-15.0, 118.0, Math.toRadians(218));
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
-    public static double launchheading = Math.toRadians(122.5);
+    public static double launchheading = Math.toRadians(121.5);
     public static double newLaunchPoseX = launchPoseX-4, newLaunchPoseY = launchPoseY+2;
     public static Pose launchPose = new Pose(144-newLaunchPoseX, newLaunchPoseY, launchheading);
     public static Pose aprilTagPoseOld = new Pose(46.008, 96.996, Math.toRadians(160));
@@ -461,7 +461,8 @@ public class NewRedAuto extends LinearOpMode {
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
-                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-35),
+                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-39),
+                                new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.5),
                                 enableSecondary(),
                                 g.loadAction(),
                                 follow(aprilTag),
@@ -476,6 +477,7 @@ public class NewRedAuto extends LinearOpMode {
                                 g.loadAction(),
                                 enableSecondary(),
                                 new WaitToDone(),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 enableSecondary(),
                                 followUntilDone(scorePreload),
                                 new InstantAction(() -> GreenFN.detect = false),
@@ -484,13 +486,14 @@ public class NewRedAuto extends LinearOpMode {
                                 g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 new SleepAction(0.2),
                                 shootInOrder( 0),
-                                new SleepAction(GreenFN.minTimeBtwnShots *3-0.35),
+                                new SleepAction(0.5 *3-0.3),
 //                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-200),
 //                                g.setIntakeRPM(0),
                                 disableSecondary(),
                                 g.loadAction(),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+550),
                                 followUntilDone(gotoFirst),
+                                new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.75),
                                 enableSecondary(),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 follow(scoreFirst),
@@ -500,7 +503,7 @@ public class NewRedAuto extends LinearOpMode {
                                 g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 new SleepAction(0.2),
                                 shootInOrder(1),
-                                new SleepAction(GreenFN.minTimeBtwnShots *3-0.35),
+                                new SleepAction(GreenFN.minTimeBtwnShots *3-0.2),
 //                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-200),
 //                                g.setIntakeRPM(0),
                                 disableSecondary(),
@@ -517,7 +520,7 @@ public class NewRedAuto extends LinearOpMode {
                                 g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 new SleepAction(0.2),
                                 shootInOrder(2),
-                                new SleepAction(GreenFN.minTimeBtwnShots *3-0.35),
+                                new SleepAction(GreenFN.minTimeBtwnShots *3-0.2),
 //                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-200),
                                 g.setIntakeRPM(0),
                                 disableSecondary(),
@@ -527,12 +530,15 @@ public class NewRedAuto extends LinearOpMode {
 //                                new SleepAction(0.1),
 //                                g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 enableSecondary(),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 follow(scoreThird),
+                                new SleepAction(0.7),
+                                g.setIntakeRPM(0),
                                 new WaitToDone(),
-//                                new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.2),
+                                g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 new SleepAction(0.2),
                                 shootInOrder(3),
-                                new SleepAction(GreenFN.minTimeBtwnShots *3-0.35),
+                                new SleepAction(GreenFN.minTimeBtwnShots *3-0.2),
 //                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-200),
                                 g.setIntakeRPM(0),
                                 g.setShooterRPM(0),
