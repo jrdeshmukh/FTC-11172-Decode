@@ -40,7 +40,6 @@ import java.util.List;
 
 @Autonomous()
 @Config()
-@Disabled()
 public class BlueAuto2 extends LinearOpMode {
 
     GreenFN g;
@@ -439,7 +438,7 @@ public class BlueAuto2 extends LinearOpMode {
                 new Path(
                         new BezierLine(startPose, aprilTagPose)
                 );
-        aprilTag.setLinearHeadingInterpolation(startPose.getHeading(), aprilTagPose.getHeading());
+        aprilTag.setConstantHeadingInterpolation(Math.toRadians(141));
 
         Path shootPreload =
                 new Path(
@@ -618,14 +617,6 @@ public class BlueAuto2 extends LinearOpMode {
                                 g.setShooterRPM((int) GreenFN.shooterAutoRPM-15.6),
                                 g.loadAction(),
                                 follow(aprilTag),
-                                new ParallelAction(
-                                        new SleepAction(0.5),
-                                        g.loadAction(),
-                                        new SequentialAction(
-                                                new SleepAction(0.2)
-//                                                g.setIntakeRPM((int) GreenFN.intakeRPM+250)
-                                        )
-                                ),
                                 g.loadAction(),
                                 new WaitToDone(),
                                 follow(shootPreload),
