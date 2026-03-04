@@ -308,9 +308,11 @@ public class OldBlueAuto extends LinearOpMode {
 //    apriltagy: 0.0
 //    heading: : -2.627474546432495
 
-    public static double launchPoseX = 57, launchPoseY = 94, launchPoseHeading = Math.toRadians(236.5);
+    public static double launchPoseX = 57, launchPoseY = 94,launchPoseHeading = Math.toRadians(236);;
+    public static double newLaunchPoseX = launchPoseX-4, newLaunchPoseY = launchPoseY+2;
+
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
-    public static Pose launchPose = new Pose(launchPoseX, launchPoseY, launchPoseHeading);
+    public static Pose launchPose = new Pose(newLaunchPoseX, newLaunchPoseY, launchPoseHeading);
 
     // Define all poses and headings as variables at the top
     public static Pose aprilTagPose = new Pose(41.008, 101.996, Math.toRadians(160));
