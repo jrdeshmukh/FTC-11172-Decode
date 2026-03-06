@@ -20,6 +20,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.config.GreenFN;
@@ -29,6 +30,7 @@ import java.util.List;
 
 @Autonomous()
 @Config()
+@Disabled
 public class BlueAlliance extends LinearOpMode {
 
     GreenFN g;

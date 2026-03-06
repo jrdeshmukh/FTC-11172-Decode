@@ -480,7 +480,7 @@ public class BlueParterAuto1 extends LinearOpMode {
                                 g.loadAction(),
 //                                new SleepAction(1),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM-100),
-                                new SleepAction(0.2),
+                                new SleepAction(0.7),
                                 shootInOrder( 0),
                                 new SleepAction(0.5 *3-0.3),
                                 new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.75),

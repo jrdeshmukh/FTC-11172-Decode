@@ -50,7 +50,7 @@ public class WetBall extends OpMode {
     double headingError = 0;
     double lastHeading;
     boolean balls = false;
-    public static int loopsPredicted = 3, loopsBack = 1;
+    public static int loopsPredicted = 1, loopsBack = 1;
     List<Action> runningActions = new ArrayList<>();
     Gamepad.RumbleEffect balls2 = new Gamepad.RumbleEffect.Builder().addStep(1, 1, 100).build();
     Gamepad.RumbleEffect balls3 = new Gamepad.RumbleEffect.Builder().addStep(1, 1, 200).addStep(0,0,100).addStep(1,1,200).addStep(0,0,100).addStep(1,1,200).build();
@@ -62,7 +62,7 @@ public class WetBall extends OpMode {
     public static double headingLockTolerance = 0.007;
     public static double hp = 0.7 , hi = 0, hd=0.09, hf=0.01;
     public static double h2p = 1.2, h2i = 0, h2d = 0.12, h2f = 0.03;
-    public static double shotTime = 0.6;
+    public static double shotTime = 0.8;
     double lastLoopTime;
     Pose goalPose = new Pose(0,0,0);
     double[] xvelo = new double[20];
@@ -123,7 +123,7 @@ public class WetBall extends OpMode {
 //            gp1.rumble(1000);
 //            gp2.rumble(1000);
         }
-        g.auto = false;
+//        g.auto = false;
         g = new GreenFN(hardwareMap);
         g.follower.setStartingPose(startPose);
         g.follower.setPose(startPose);
@@ -238,6 +238,7 @@ public class WetBall extends OpMode {
             else {
                 g.setHoodUp();
                 g.inAuto = false;
+                GreenFN.minTimeBtwnShots = 0.25;
             }
         }
 //        if(gp1.left_trigger==0) {
@@ -464,6 +465,7 @@ public class WetBall extends OpMode {
         gpx = goalPose.getX()-xVelPred*shotTime;
         gpy = goalPose.getY()-yVelPred*shotTime;
 
+
         g.currentDistance = g.getPose().distanceFrom(new Pose(goalPose.getX()-xVelPred*shotTime*2, goalPose.getY()-yVelPred*shotTime*2));
         if(GreenFN.side == RED) {
             if(g.getPose().getX() >72 && g.getPose().getX() > g.getPose().getY()) {
@@ -570,7 +572,7 @@ public class WetBall extends OpMode {
                 secondaryHeadingPIDF.updateFeedForwardInput(MathFunctions.getTurnDirection(g.getPose().getHeading(), lastHeading));
                 secondaryHeadingPIDF.updateError(headingError);
                 headingPower = headingPIDF.run();
-                if(headingError < Math.PI / 20 && g.follower.getVelocity().getMagnitude() < 20) {
+                if(headingError < Math.PI / 20) {
                     headingPower = secondaryHeadingPIDF.run();
                 }
             }
