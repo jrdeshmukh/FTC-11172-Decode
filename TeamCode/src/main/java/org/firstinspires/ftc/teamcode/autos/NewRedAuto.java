@@ -444,7 +444,7 @@ public class NewRedAuto extends LinearOpMode {
         park.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(0),  0.5);
 
 
-        GreenFN.detect = true;
+        GreenFN.detect = false;
         GreenFN.intakeTarget = 0;
         GreenFN.shooterTarget = 0;
 

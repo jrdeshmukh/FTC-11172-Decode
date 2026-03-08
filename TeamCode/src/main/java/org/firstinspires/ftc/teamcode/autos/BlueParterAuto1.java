@@ -322,7 +322,7 @@ public class BlueParterAuto1 extends LinearOpMode {
     public static Pose startPose = new Pose(15.0, 118.0, Math.toRadians(141));
 
 
-    public static double launchPoseX = 57, launchPoseY = 94,launchPoseHeading = Math.toRadians(240);;
+    public static double launchPoseX = 57, launchPoseY = 94,launchPoseHeading = Math.toRadians(240.5);;
     public static double newLaunchPoseX = launchPoseX-4, newLaunchPoseY = launchPoseY+2;
 
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
@@ -333,7 +333,7 @@ public class BlueParterAuto1 extends LinearOpMode {
 
     public static Pose gotoFirstCtrl = mirrorNoHeading(NewRedAuto.gotoFirstCtrl);
     public static Pose gotoFirstCtrl2 = mirrorNoHeading(NewRedAuto.gotoFirstCtrl2);
-    public static Pose gatePose = new Pose(144-NewRedAuto.gatePose.getX() - 1, NewRedAuto.gatePose.getY(), NewRedAuto.gatePose.getHeading());
+    public static Pose gatePose = new Pose(144-NewRedAuto.gatePose.getX() - 1.5, NewRedAuto.gatePose.getY(), NewRedAuto.gatePose.getHeading());
 
     public static Pose secondCtrl = new Pose(144-NewRedAuto.secondCtrl.getX()-2, NewRedAuto.secondCtrl.getY(), Math.toRadians(0));
     public static Pose secondIntakePose = new Pose(144-NewRedAuto.secondIntakePose.getX()-3, NewRedAuto.secondIntakePose.getY(), Math.toRadians(0));

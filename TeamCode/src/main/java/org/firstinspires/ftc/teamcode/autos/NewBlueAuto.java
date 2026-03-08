@@ -325,7 +325,7 @@ public class NewBlueAuto extends LinearOpMode {
     public static Pose startPose = new Pose(15.0, 118.0, Math.toRadians(141));
 
 
-    public static double launchPoseX = 57, launchPoseY = 94,launchPoseHeading = Math.toRadians(240);;
+    public static double launchPoseX = 57, launchPoseY = 94,launchPoseHeading = Math.toRadians(240.5);;
     public static double newLaunchPoseX = launchPoseX-4, newLaunchPoseY = launchPoseY+6;
 
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
