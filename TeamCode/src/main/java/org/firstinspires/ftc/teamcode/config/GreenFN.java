@@ -20,6 +20,7 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
@@ -157,7 +158,7 @@ public class GreenFN {
 
     public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.002, intakekI = 0, intakekD = 0.00, shooterkP = 0.02, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.0009, shooterkF = 0.0006;
+    public static double intakekP = 0.001, intakekI = 0, intakekD = 0.00, shooterkP = 0.003, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.0007, shooterkF = 0.00065;
     public DcMotorEx shooter1, shooter2, intake, fifthWheel;
 //    public NormalizedColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
@@ -174,6 +175,7 @@ public class GreenFN {
     public boolean colorSensorUpdated = false, slotsUpdated=false;
     public boolean toUpdateColorSensor = false, toUpdateSlots = false;
     public int recentServoShot = 0;
+    public double motorCPR = 28;
 
     public double s1v = 0, s2v = 0, iv = 0;
 
@@ -208,10 +210,10 @@ public class GreenFN {
 
     public static double stopperIntake = 0.83, stopperLoad = 0.61, stopperShoot = 0.05;
     public static double stopper1Shoot = 0.025, stopper2Shoot = 0.05, stopper3Shoot = 0.1;
-    public static double stopper1Load = 0.32, stopper2Load = 0.34; //0.47
-    public static double stopper3Load = 0.39;
-    public static double stopper1Intake = 0.54, stopper2Intake = 0.59;// 0.655,
-    public static double stopper3Intake = 0.62;
+    public static double stopper1Load = 0.54, stopper2Load = 0.34; //0.47
+    public static double stopper3Load = 0.58;
+    public static double stopper1Intake = 0.3, stopper2Intake = 0.59;// 0.655,
+    public static double stopper3Intake = 0.35;
 
     public double hood1down = 0.38, hood2down = 0.74, hood1up = 0.52, hood2up = 0.6;
 
@@ -361,6 +363,7 @@ public class GreenFN {
         }
         shooter1 = map.get(DcMotorEx.class, "shooter1");
         shooter2 = map.get(DcMotorEx.class, "shooter2");
+        shooter1.setDirection(DcMotorSimple.Direction.REVERSE);
         intake = map.get(DcMotorEx.class, "intake");
         shooterController1 = new PIDController(shooterkP, shooterkI, shooterkD);
         shooterController2 = new PIDController(shooterkP, shooterkI, shooterkD);
@@ -431,6 +434,7 @@ public class GreenFN {
         iv = intake.getVelocity(AngleUnit.DEGREES);
         s1v = shooter1.getVelocity(AngleUnit.DEGREES);
         s2v = shooter2.getVelocity(AngleUnit.DEGREES);
+
         detections = aprilTag.getDetections();
 //        if (!detections.isEmpty()) {
 //            AprilTagDetection detection = detections.get(0); // pick the first detected tag
@@ -630,8 +634,8 @@ public class GreenFN {
     }
 
     public void updatePIDs() {
-        flywheel1Power = shooterController1.calculate(s1v, modifiedShooterRPM) + s1v * shooterkF;
-        flywheel2Power = shooterController2.calculate(s2v, modifiedShooterRPM) + s2v * shooterkF;
+        flywheel1Power = shooterController1.calculate(s1v, modifiedShooterRPM) + shooterTarget * shooterkF;
+        flywheel2Power = shooterController2.calculate(s2v, modifiedShooterRPM) + shooterTarget * shooterkF;
 
         intakePower = intakeController.calculate(iv, intakeTarget) + iv * intakeKF;
         intakeController.setPID(intakekP, intakekI, intakekD);

@@ -45,6 +45,7 @@ public class WetBall extends OpMode {
     boolean autoDriving = false;
     boolean headingLock = false;
     boolean targetHeading = false;
+    double motorCPR = 28;
     boolean inZone = false;
     double autoRPMtol = 36;
     double headingError = 0;
@@ -613,6 +614,7 @@ public class WetBall extends OpMode {
 
         telemetry.addData("shooter1 velo: ", g.s1v);
         telemetry.addData("shooter2 velo: ", g.s2v);
+        telemetry.addData("motor RPM: ", g.shooter1.getVelocity() / motorCPR * 60);
         telemetry.addData("shooter target: ", GreenFN.shooterTarget);
         telemetry.addData("sh1 pow: ", GreenFN.flywheel1Power);
         telemetry.addData("sh2 pow: ", GreenFN.flywheel2Power);
