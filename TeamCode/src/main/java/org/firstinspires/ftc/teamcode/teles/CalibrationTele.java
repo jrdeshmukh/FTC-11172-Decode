@@ -3,7 +3,9 @@ package org.firstinspires.ftc.teamcode.teles;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.config.BBG;
 import org.firstinspires.ftc.teamcode.config.GreenFN;
 
@@ -35,6 +37,16 @@ public class CalibrationTele extends OpMode {
     public void loop() {
 //        g.update();
 //        g.follower.setTeleOpDrive(-gamepad1.left_stick_y, -gamepad1.left_stick_x * 1.27, -gamepad1.right_stick_x * 0.75, true);
+        if(g.stopper1.getPosition() == GreenFN.stopper1Intake && g.colorSensor1.getDistance(DistanceUnit.INCH) < 0.25) {
+            g.stopper1.setPosition(GreenFN.stopper1Load);
+        }
+        if(g.stopper2.getPosition() == GreenFN.stopper2Intake && g.colorSensor2.getDistance(DistanceUnit.INCH) < 0.25) {
+            g.stopper2.setPosition(GreenFN.stopper2Load);
+        }
+        if(g.stopper3.getPosition() == GreenFN.stopper3Intake && g.colorSensor3.getDistance(DistanceUnit.INCH) < 0.25) {
+            g.stopper3.setPosition(GreenFN.stopper3Load);
+        }
+
         g.updateSlotDetection();
         if(gp1.a()) {
             gamepad1.rumble(1000);
