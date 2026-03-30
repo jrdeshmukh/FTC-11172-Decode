@@ -329,8 +329,8 @@ public class NewRedAuto extends LinearOpMode {
 
     public static Pose startPose = new Pose(144-15.0, 118.0, Math.toRadians(218));
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
-    public static double launchheading = Math.toRadians(121.5);
-    public static double newLaunchPoseX = launchPoseX-4, newLaunchPoseY = launchPoseY+2;
+    public static double launchheading = Math.toRadians(120.9);
+    public static double newLaunchPoseX = launchPoseX-4, newLaunchPoseY = launchPoseY+6;
     public static Pose launchPose = new Pose(144-newLaunchPoseX, newLaunchPoseY, launchheading);
     public static Pose aprilTagPoseOld = new Pose(46.008, 96.996, Math.toRadians(160));
     public static Pose aprilTagPose = aprilTagPoseOld.mirror().setHeading(Math.toRadians(200));
@@ -444,7 +444,7 @@ public class NewRedAuto extends LinearOpMode {
         park.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(0),  0.5);
 
 
-        GreenFN.detect = true;
+        GreenFN.detect = false;
         GreenFN.intakeTarget = 0;
         GreenFN.shooterTarget = 0;
 
@@ -461,7 +461,7 @@ public class NewRedAuto extends LinearOpMode {
                 new ParallelAction(
                         new FollowerUpdate(),
                         new SequentialAction(
-                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-39),
+                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-27),
                                 new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.5),
                                 enableSecondary(),
                                 g.loadAction(),
@@ -533,10 +533,10 @@ public class NewRedAuto extends LinearOpMode {
                                 g.setIntakeRPM((int) GreenFN.intakeRPM-100),
                                 follow(scoreThird),
                                 new SleepAction(0.7),
-                                g.setIntakeRPM(0),
+//                                g.setIntakeRPM(0),
                                 new WaitToDone(),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM-100),
-                                new SleepAction(0.2),
+                                new SleepAction(0.3),
                                 shootInOrder(3),
                                 new SleepAction(GreenFN.minTimeBtwnShots *3-0.2),
 //                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-200),

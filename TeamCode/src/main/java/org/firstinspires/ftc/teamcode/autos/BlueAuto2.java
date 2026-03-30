@@ -44,13 +44,21 @@ public class BlueAuto2 extends LinearOpMode {
 
     GreenFN g;
     public class FollowerUpdate implements Action {
+        boolean showHeadingVector = false;
         @Override
         public boolean run(@NonNull TelemetryPacket telemetryPacket) {
             g.update();
             telemetry.addData("x: ", g.getPose().getX());
             telemetry.addData("y: ", g.getPose().getY());
             telemetry.addData("heading: ", Math.toDegrees(g.getPose().getHeading()));
-            telemetry.addData("heading power: ", g.follower.getHeadingVector());
+            if(g.follower.isBusy()) {
+                showHeadingVector = true;
+            }
+            if(showHeadingVector) {
+                telemetry.addData("heading power: ", g.follower.vectorCalculator.getHeadingVector().getMagnitude());
+            }
+            telemetry.addData("follower isbusy: ", g.follower.isBusy());
+            telemetry.addData("t value: ", g.follower.getCurrentTValue());
             telemetry.addData("recentServoShot: ", g.recentServoShot);
             telemetry.addData("shooterPower: ", g.flywheel1Power);
             telemetry.addData("shooterTarget: ", g.shooterTarget);
@@ -436,7 +444,10 @@ public class BlueAuto2 extends LinearOpMode {
 
         Path aprilTag =
                 new Path(
-                        new BezierLine(startPose, aprilTagPose)
+                        new BezierLine(
+                                startPose,
+                                aprilTagPose
+                        )
                 );
         aprilTag.setConstantHeadingInterpolation(Math.toRadians(141));
 
@@ -599,7 +610,7 @@ public class BlueAuto2 extends LinearOpMode {
 
 
 
-        GreenFN.detect = false;
+        GreenFN.detect = true;
         GreenFN.intakeTarget = 0;
         GreenFN.shooterTarget = 0;
         g.loadStoppers();
@@ -614,12 +625,24 @@ public class BlueAuto2 extends LinearOpMode {
                         new FollowerUpdate(),
                         new SequentialAction(
                                 new InstantAction(() -> GreenFN.detect=true),
-                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-15.6),
+                                g.setShooterRPM((int) GreenFN.shooterAutoRPM-27),
+                                new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.5),
+                                enableSecondary(),
                                 g.loadAction(),
                                 follow(aprilTag),
+                                new ParallelAction(
+                                        new SleepAction(0.5),
+                                        g.loadAction(),
+                                        new SequentialAction(
+                                                new SleepAction(0.2)
+//                                                g.setIntakeRPM((int) GreenFN.intakeRPM+250)
+                                        )
+                                ),
                                 g.loadAction(),
+                                enableSecondary(),
                                 new WaitToDone(),
-                                follow(shootPreload),
+                                enableSecondary(),
+                                followUntilDone(shootPreload),
                                 new SleepAction(0.3),
                                 enableSecondary(),
                                 g.loadAction(),

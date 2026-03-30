@@ -20,6 +20,7 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
@@ -49,18 +50,18 @@ import java.util.List;
 
 @Config
 public class GreenFN {
-    public boolean auto;
+    public boolean auto = false;
     public static double shooterCloseRPM = 645;
     public static double shooterAutoRPM = 668;
     private static final Logger log = LoggerFactory.getLogger(GreenFN.class);
     public static double intakeRPM = 4000;
     public static double closeHoodAngle = 80;
     WebcamName webcam1;
-    public VisionPortal visionPortal;
+    private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
     static Size cameraResolution = new Size(640, 480);
-    ImageRegion previousFrame = ImageRegion.asUnityCenterCoordinates(-1,1,0,-0.75);
-    ImageRegion newFrame = ImageRegion.asUnityCenterCoordinates(0,0.75,1,-1);
+    ImageRegion previousFrame = ImageRegion.asUnityCenterCoordinates(-1,1,0,0);
+    ImageRegion newFrame = ImageRegion.asUnityCenterCoordinates(0,0,1,-1);
     private List<AprilTagDetection> detectedTags = new ArrayList<>();
     private Telemetry telemetry;
     public ColorBlobLocatorProcessor colorLocator = new ColorBlobLocatorProcessor.Builder()
@@ -157,7 +158,7 @@ public class GreenFN {
 
     public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.002, intakekI = 0, intakekD = 0.00, shooterkP = 0.02, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.0009, shooterkF = 0.0006;
+    public static double intakekP = 0.001, intakekI = 0, intakekD = 0.00, shooterkP = 0.003, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.0007, shooterkF = 0.00065;
     public DcMotorEx shooter1, shooter2, intake, fifthWheel;
 //    public NormalizedColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
@@ -174,6 +175,7 @@ public class GreenFN {
     public boolean colorSensorUpdated = false, slotsUpdated=false;
     public boolean toUpdateColorSensor = false, toUpdateSlots = false;
     public int recentServoShot = 0;
+    public double motorCPR = 28;
 
     public double s1v = 0, s2v = 0, iv = 0;
 
@@ -208,10 +210,10 @@ public class GreenFN {
 
     public static double stopperIntake = 0.83, stopperLoad = 0.61, stopperShoot = 0.05;
     public static double stopper1Shoot = 0.025, stopper2Shoot = 0.05, stopper3Shoot = 0.1;
-    public static double stopper1Load = 0.32, stopper2Load = 0.34; //0.47
-    public static double stopper3Load = 0.39;
-    public static double stopper1Intake = 0.54, stopper2Intake = 0.59;// 0.655,
-    public static double stopper3Intake = 0.62;
+    public static double stopper1Load = 0.54, stopper2Load = 0.34; //0.47
+    public static double stopper3Load = 0.58;
+    public static double stopper1Intake = 0.3, stopper2Intake = 0.59;// 0.655,
+    public static double stopper3Intake = 0.35;
 
     public double hood1down = 0.38, hood2down = 0.74, hood1up = 0.52, hood2up = 0.6;
 
@@ -238,7 +240,7 @@ public class GreenFN {
 
     public Timer shotTimer;
     //public Timer stopwatch;
-    public Timer stopwatch;
+    private ElapsedTime stopwatch = new ElapsedTime();
     public double recentShotTime = 0;
     public static Pose fromApriltag = new Pose(0, 0, 0);
     public static double modifiedShooterRPM = shooterTarget, modifiedIntakeRPM = intakeTarget;
@@ -361,6 +363,7 @@ public class GreenFN {
         }
         shooter1 = map.get(DcMotorEx.class, "shooter1");
         shooter2 = map.get(DcMotorEx.class, "shooter2");
+        shooter1.setDirection(DcMotorSimple.Direction.REVERSE);
         intake = map.get(DcMotorEx.class, "intake");
         shooterController1 = new PIDController(shooterkP, shooterkI, shooterkD);
         shooterController2 = new PIDController(shooterkP, shooterkI, shooterkD);
@@ -431,6 +434,7 @@ public class GreenFN {
         iv = intake.getVelocity(AngleUnit.DEGREES);
         s1v = shooter1.getVelocity(AngleUnit.DEGREES);
         s2v = shooter2.getVelocity(AngleUnit.DEGREES);
+
         detections = aprilTag.getDetections();
 //        if (!detections.isEmpty()) {
 //            AprilTagDetection detection = detections.get(0); // pick the first detected tag
@@ -503,88 +507,39 @@ public class GreenFN {
 //            }
         }
 
-        colorSensorUpdated = false;
-        if(toUpdateColorSensor) {
-            updateColorSensor();
-        }
-        slotsUpdated = false;
-        if(toUpdateSlots) {
-            updateSlotDetection();
-        }
-        visionPortal.resumeLiveView();
-        visionPortal.resumeStreaming();
-    }
-    public void blueProcessor() {
-        switch(row) {
-            case 1:
-                storedBlobs = 0;
-                if (getPose().getHeading() <= -60 && getPose().getHeading() >= -75) {
-                    blobFinding(true);
-                    storedBlobs = storedBlobs + rightBlobs;
-                }
-                else {
-                    blobFinding(false);
-                }
-                break;
-            case 2:
-                storedBlobs = 0;
-                if (getPose().getHeading() >= -105 && getPose().getHeading() <= -90) {
-                    blobFinding(true);
-                    storedBlobs = storedBlobs + rightBlobs;
-                }
-                else {
-                    blobFinding(false);
-                }
-                break;
-            case 3:
-                storedBlobs = 0;
-                if (getPose().getHeading() >= -120 && getPose().getHeading() <= -105) {
-                    blobFinding(true);
-                    storedBlobs = storedBlobs + rightBlobs;
-                }
-                else {
-                    blobFinding(false);
-                }
-                break;
-        }
-    }
-    public void redProcessor() {
-        switch(row) {
-            case 1:
-                storedBlobs = 0;
-                if (getPose().getHeading() >= 230 && getPose().getHeading() <= 270) {
-                    blobFinding(true);
-                    storedBlobs = storedBlobs + rightBlobs;
-                }
-                else {
-                    blobFinding(false);
-                }
-            break;
-            case 2:
-                storedBlobs = 0;
-                if (getPose().getHeading() >= 270 && getPose().getHeading() <= 280) {
-                    blobFinding(true);
-                    storedBlobs = storedBlobs + rightBlobs;
-                } else {
-                    blobFinding(false);
-                }
-            break;
-            case 3:
-                storedBlobs = 0;
-                if (getPose().getHeading() >= 290 && getPose().getHeading() <= 300) {
-                    blobFinding(true);
-                    storedBlobs = storedBlobs + rightBlobs;
-                } else {
-                    blobFinding(false);
-                }
-            break;
-        }
-    }
-    public void blobFinding(boolean active){
-        visionPortal.setProcessorEnabled(colorLocator, active);
-        visionPortal.setProcessorEnabled(colorLocator2, active);
-        visionPortal.setProcessorEnabled(oldcolorLocator, active);
-        visionPortal.setProcessorEnabled(oldcolorLocator2, active);
+//        colorSensorUpdated = false;
+//        if(toUpdateColorSensor) {
+//            updateColorSensor();
+//        }
+//        slotsUpdated = false;
+//        if(toUpdateSlots) {
+//            updateSlotDetection();
+//        }
+//        if (auto && stopwatch.milliseconds() >= 5 && stopwatch.milliseconds() <= 7) {
+//            visionPortal.setProcessorEnabled(colorLocator, true);
+//            visionPortal.setProcessorEnabled(colorLocator2, true);
+//            visionPortal.setProcessorEnabled(oldcolorLocator, true);
+//            visionPortal.setProcessorEnabled(oldcolorLocator2, true);
+//        }
+//        //change to heading target heading =
+//        // (arccosin(distance from camera to specific point on classifier at the right pose /
+//        // vertical distance from camera to classifier))
+//        //else if (auto && Math.toDegrees(g.getPose().getHeading()) >= target heading - 2 &&
+//        //g.getPose().getHeading() <= target heading + 2) {}
+//        else if (auto && stopwatch.milliseconds() >= 8 && stopwatch.milliseconds() <= 10) {
+//            visionPortal.setProcessorEnabled(colorLocator, true);
+//            visionPortal.setProcessorEnabled(colorLocator2, true);
+//            visionPortal.setProcessorEnabled(oldcolorLocator, true);
+//            visionPortal.setProcessorEnabled(oldcolorLocator2, true);
+//            storedBlobs = storedBlobs + rightBlobs;
+//        }
+//        else {
+//            visionPortal.setProcessorEnabled(colorLocator, false);
+//            visionPortal.setProcessorEnabled(colorLocator2, false);
+//            visionPortal.setProcessorEnabled(oldcolorLocator, false);
+//            visionPortal.setProcessorEnabled(oldcolorLocator2, false);
+//            visionPortal.close();
+//        }
     }
 
     public Pose getPose() {
@@ -679,8 +634,8 @@ public class GreenFN {
     }
 
     public void updatePIDs() {
-        flywheel1Power = shooterController1.calculate(s1v, modifiedShooterRPM) + s1v * shooterkF;
-        flywheel2Power = shooterController2.calculate(s2v, modifiedShooterRPM) + s2v * shooterkF;
+        flywheel1Power = shooterController1.calculate(s1v, modifiedShooterRPM) + shooterTarget * shooterkF;
+        flywheel2Power = shooterController2.calculate(s2v, modifiedShooterRPM) + shooterTarget * shooterkF;
 
         intakePower = intakeController.calculate(iv, intakeTarget) + iv * intakeKF;
         intakeController.setPID(intakekP, intakekI, intakekD);

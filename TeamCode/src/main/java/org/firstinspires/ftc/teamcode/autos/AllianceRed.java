@@ -22,6 +22,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
@@ -32,6 +33,7 @@ import java.util.List;
 
 @Autonomous()
 @Config()
+@Disabled
 public class AllianceRed extends LinearOpMode {
 
     GreenFN g;

@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ReadWriteFile;
@@ -23,6 +24,7 @@ import java.io.File;
 import java.util.List;
 
 @Autonomous
+@Disabled
 public class SampleAuto extends OpMode {
 
     GreenFN g;

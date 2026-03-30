@@ -33,6 +33,8 @@ public class PIDTele extends OpMode {
         g = new GreenFN(hardwareMap);
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         recoveryTimer = new Timer();
+        GreenFN.inAuto = true;
+        g.loaded = true;
     }
 
     @Override
