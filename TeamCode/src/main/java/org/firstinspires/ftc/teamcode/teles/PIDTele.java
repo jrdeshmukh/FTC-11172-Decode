@@ -31,6 +31,7 @@ public class PIDTele extends OpMode {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
         g = new GreenFN(hardwareMap);
+        GreenFN.inAuto = true;
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         recoveryTimer = new Timer();
         GreenFN.inAuto = true;

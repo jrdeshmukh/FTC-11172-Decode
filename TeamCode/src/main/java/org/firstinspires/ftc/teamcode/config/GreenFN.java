@@ -51,10 +51,10 @@ import java.util.List;
 @Config
 public class GreenFN {
     public boolean auto = false;
-    public static double shooterCloseRPM = 645;
+    public static double shooterCloseRPM = 800;
     public static double shooterAutoRPM = 668;
     private static final Logger log = LoggerFactory.getLogger(GreenFN.class);
-    public static double intakeRPM = 4000;
+    public static double intakeRPM = 1000;
     public static double closeHoodAngle = 80;
     WebcamName webcam1;
     private VisionPortal visionPortal;
@@ -158,7 +158,7 @@ public class GreenFN {
 
     public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.001, intakekI = 0, intakekD = 0.00, shooterkP = 0.003, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.0007, shooterkF = 0.00065;
+    public static double intakekP = 0.00, intakekI = 0, intakekD = 0.00, shooterkP = 0.002, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.00073, shooterkF = 0.00074;
     public DcMotorEx shooter1, shooter2, intake, fifthWheel;
 //    public NormalizedColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
@@ -175,13 +175,13 @@ public class GreenFN {
     public boolean colorSensorUpdated = false, slotsUpdated=false;
     public boolean toUpdateColorSensor = false, toUpdateSlots = false;
     public int recentServoShot = 0;
-    public double motorCPR = 28;
 
     public double s1v = 0, s2v = 0, iv = 0;
 
     public double adjustedX = 0, adjustedY = 0;
 
     public static boolean inAuto = false;
+    public static boolean threeAtOnce = false;
 
     public int regressionOffset = 0;
 
@@ -209,11 +209,11 @@ public class GreenFN {
 
 
     public static double stopperIntake = 0.83, stopperLoad = 0.61, stopperShoot = 0.05;
-    public static double stopper1Shoot = 0.025, stopper2Shoot = 0.05, stopper3Shoot = 0.1;
-    public static double stopper1Load = 0.54, stopper2Load = 0.34; //0.47
-    public static double stopper3Load = 0.58;
-    public static double stopper1Intake = 0.3, stopper2Intake = 0.59;// 0.655,
-    public static double stopper3Intake = 0.35;
+    public static double stopper1Shoot = 0.62, stopper2Shoot = 0.663, stopper3Shoot = 0.665;
+    public static double stopper1Load = 0.44, stopper2Load = 0.483; //0.47
+    public static double stopper3Load = 0.485;
+    public static double stopper1Intake = 0.29, stopper2Intake = 0.34;// 0.655,
+    public static double stopper3Intake = 0.34;
 
     public double hood1down = 0.38, hood2down = 0.74, hood1up = 0.52, hood2up = 0.6;
 
@@ -434,7 +434,6 @@ public class GreenFN {
         iv = intake.getVelocity(AngleUnit.DEGREES);
         s1v = shooter1.getVelocity(AngleUnit.DEGREES);
         s2v = shooter2.getVelocity(AngleUnit.DEGREES);
-
         detections = aprilTag.getDetections();
 //        if (!detections.isEmpty()) {
 //            AprilTagDetection detection = detections.get(0); // pick the first detected tag
@@ -460,17 +459,31 @@ public class GreenFN {
 
         List<Servo> toRemove = new ArrayList<>();
         for (Servo s : shooterQueue) {
-            if (shotTimer.getElapsedTimeSeconds() - recentShotTime > minTimeBtwnShots) {
+            if(minTimeBtwnShots==0) {
+                if (s.equals(stopper1)) {
+                    recentServoShot = 1;
+                    stopper1.setPosition(stopper1Shoot);
+                }
+                else if (s.equals(stopper2)) {
+                    recentServoShot = 2;
+                    stopper2.setPosition(stopper2Shoot);
+                }
+                else if (s.equals(stopper3)) {
+                    recentServoShot = 3;
+                    stopper3.setPosition(stopper3Shoot);
+                }
+            }
+            else if (shotTimer.getElapsedTimeSeconds() - recentShotTime >= minTimeBtwnShots) {
                 toRemove.add(s);
                 if (s.equals(stopper1)) {
                     recentServoShot = 1;
                     stopper1.setPosition(stopper1Shoot);
                 }
-                if (s.equals(stopper2)) {
+                else if (s.equals(stopper2)) {
                     recentServoShot = 2;
                     stopper2.setPosition(stopper2Shoot);
                 }
-                if (s.equals(stopper3)) {
+                else if (s.equals(stopper3)) {
                     recentServoShot = 3;
                     stopper3.setPosition(stopper3Shoot);
                 }
@@ -481,23 +494,29 @@ public class GreenFN {
 
 
         if (!loaded) {
-//            modifiedShooterRPM = 0;
+            modifiedShooterRPM = shooterTarget+regressionOffset;
             modifiedIntakeRPM = intakeRPM;
 
         }
         if (loaded) {
             modifiedShooterRPM = shooterTarget+regressionOffset;
-            modifiedIntakeRPM = intakeTarget-1000;
+//            modifiedIntakeRPM = intakeTarget-1000;
         }
 
         if (detect) {
             updateAprilTagDetection();
 
         }
-        if(modifiedShooterRPM !=0 && !inAuto) {
-            modifiedShooterRPM = getRPMreg(currentDistance)+regressionOffset;
-            if(modifiedShooterRPM < 600) modifiedShooterRPM = 600;
-            if(modifiedShooterRPM > 820) modifiedShooterRPM = 820;
+        if(shooterTarget !=0 && !inAuto) {
+            shooterTarget = regressionOffset+(threeAtOnce?getRPMreg3(currentDistance):getRPMreg(currentDistance));
+            if(shooterTarget < 700) shooterTarget = 600;
+            if(currentDistance > 70) {
+                minTimeBtwnShots = 0.003*currentDistance+0.145;
+            }
+            else {
+                minTimeBtwnShots = 0.25;
+            }
+            if(threeAtOnce) minTimeBtwnShots = 0;
 //            minTimeBtwnShots = 0.001*modifiedShooterRPM-0.45;
 //            if(minTimeBtwnShots < 0.2) {
 //                minTimeBtwnShots = 0.2;
@@ -634,16 +653,16 @@ public class GreenFN {
     }
 
     public void updatePIDs() {
-        flywheel1Power = shooterController1.calculate(s1v, modifiedShooterRPM) + shooterTarget * shooterkF;
-        flywheel2Power = shooterController2.calculate(s2v, modifiedShooterRPM) + shooterTarget * shooterkF;
+        flywheel1Power = shooterController1.calculate(s1v, shooterTarget) + shooterTarget * shooterkF;
+        flywheel2Power = shooterController2.calculate(s2v, shooterTarget) + shooterTarget * shooterkF;
 
-        intakePower = intakeController.calculate(iv, intakeTarget) + iv * intakeKF;
+        intakePower = intakeController.calculate(iv, intakeTarget) + intakeTarget * intakeKF;
         intakeController.setPID(intakekP, intakekI, intakekD);
         shooterController1.setPID(shooterkP, shooterkI, shooterkD);
         shooterController2.setPID(shooterkP, shooterkI, shooterkD);
         intake.setPower(intakePower);
 
-        if(modifiedShooterRPM==0) {
+        if(shooterTarget==0) {
             shooter1.setPower(0);
             shooter2.setPower(0);
             return;
@@ -824,7 +843,14 @@ public class GreenFN {
 
     public static double getRPMreg(double range) {
 //        return 0.0692362*range*range-3.38259*range+718.12462;
-        return 0.0384018*range*range-1.53268*range+612.30815;
+        if (range < 100) {
+            return 0.011249*range*range+0.606386*range+653.33594;
+        }
+        return 995;
+    }
+
+    public static double getRPMreg3(double range) {
+        return 5.21429*range+569.92857;
     }
 
     public static Pose convertToFieldPosition2(AprilTagDetection detection) {

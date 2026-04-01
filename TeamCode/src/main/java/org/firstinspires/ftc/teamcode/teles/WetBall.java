@@ -21,6 +21,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.autos.BlueAuto;
 import org.firstinspires.ftc.teamcode.config.BBG;
 import org.firstinspires.ftc.teamcode.config.FirstBoolean;
@@ -47,10 +48,12 @@ public class WetBall extends OpMode {
     boolean targetHeading = false;
     double motorCPR = 28;
     boolean inZone = false;
+    public static double distanceThreshold = 1;
     double autoRPMtol = 36;
     double headingError = 0;
     double lastHeading;
     boolean balls = false;
+    double ballsnum = 0;
     public static int loopsPredicted = 1, loopsBack = 1;
     List<Action> runningActions = new ArrayList<>();
     Gamepad.RumbleEffect balls2 = new Gamepad.RumbleEffect.Builder().addStep(1, 1, 100).build();
@@ -61,8 +64,8 @@ public class WetBall extends OpMode {
     public static PIDFController headingPIDF, secondaryHeadingPIDF;
     Timer loopTimer;
     public static double headingLockTolerance = 0.007;
-    public static double hp = 0.7 , hi = 0, hd=0.09, hf=0.01;
-    public static double h2p = 1.2, h2i = 0, h2d = 0.12, h2f = 0.03;
+    public static double hp = 0.5, hi = 0, hd=0.05, hf=0;
+    public static double h2p = 1.5, h2i = 0, h2d = 0.1, h2f = 0;
     public static double shotTime = 0.8;
     double lastLoopTime;
     Pose goalPose = new Pose(0,0,0);
@@ -75,12 +78,15 @@ public class WetBall extends OpMode {
         BLUE
     }
     Side side = Side.BLUE;
+    boolean checkSlots = false;
     FirstBoolean ballsFull = new FirstBoolean();
     FirstBoolean balls3better = new FirstBoolean();
     AprilTagDetection goal;
+    boolean threeAtOnce = true;
     boolean isBalls3 = false;
     double headingOffset = 0;
     double newX, newY;
+
     public double[] insertShiftArray(double[] input, double insertVal, double insertLoc) {
         int idx = (int) insertLoc;
 
@@ -193,6 +199,36 @@ public class WetBall extends OpMode {
             isBalls3 = false;
         }
 
+        if(checkSlots) {
+            if (g.stopper1.getPosition() == GreenFN.stopper1Intake) {
+                double distance1 = g.colorSensor1.getDistance(DistanceUnit.INCH);
+                if (distance1 < distanceThreshold) {
+                    telemetry.addData("distance 1: ", distance1);
+                    g.stopper1.setPosition(GreenFN.stopper1Load);
+                    ballsnum++;
+                }
+            }
+            if (g.stopper2.getPosition() == GreenFN.stopper2Intake) {
+                double distance2 = g.colorSensor2.getDistance(DistanceUnit.INCH);
+                if (distance2 < distanceThreshold) {
+                    telemetry.addData("distance 2: ", distance2);
+                    g.stopper2.setPosition(GreenFN.stopper2Load);
+                    ballsnum++;
+                }
+            }
+            if (g.stopper3.getPosition() == GreenFN.stopper3Intake) {
+                double distance3 = g.colorSensor3.getDistance(DistanceUnit.INCH);
+                if (distance3 < distanceThreshold) {
+                    telemetry.addData("distance 3: ", distance3);
+                    g.stopper3.setPosition(GreenFN.stopper3Load);
+                    ballsnum++;
+                }
+            }
+        }
+        GreenFN.threeAtOnce = !gamepad2.right_bumper;
+
+
+
 
 
         if(gp1.dpad_down())  {
@@ -202,6 +238,7 @@ public class WetBall extends OpMode {
 
 //blue right middle left, red left middle right
         if(gp1.right_trigger()) {
+            ballsnum = 0;
             if(GreenFN.side == BLUE) {
                 g.shoot(1);
                 g.shoot(2);
@@ -214,34 +251,33 @@ public class WetBall extends OpMode {
             }
             balls= false;
         }
-        if(gp2.x()) {g.shoot(1);}
-        if(gp2.y()) {g.shoot(2);}
+        if(gp2.x()) {
+            ballsnum = 0;
 
-        if(gp2.b()) {g.shoot(3);}
+            g.shoot(1);}
+        if(gp2.y()) {
+            ballsnum = 0;
+            g.shoot(2);}
 
-        if(gp2.left_bumper()) {g.intakeStoppers();}
-        if(gp2.right_bumper()) {
-            g.loadStoppers(); balls = false;
+        if(gp2.b()) {
+            ballsnum = 0;
+            g.shoot(3);}
+
+        if(gp2.left_bumper()) {
+            g.intakeStoppers();
+//            GreenFN.shooterTarget = 0;
         }
-        if(gamepad2.right_bumper) {
-            GreenFN.intakeTarget = GreenFN.intakeRPM;
-        }
-        else {
-            GreenFN.intakeTarget = 0;
-        }
-        if(gp2.a()) {
-            if(g.hoodUp) {
-                g.setHoodDown();
-                g.inAuto = true;
-                GreenFN.shooterTarget = GreenFN.shooterFarRPM;
-                GreenFN.minTimeBtwnShots = 0.75;
-            }
-            else {
-                g.setHoodUp();
-                g.inAuto = false;
-                GreenFN.minTimeBtwnShots = 0.25;
-            }
-        }
+//        if(gp2.right_bumper() || gp2.right_stick_button) {
+//            g.loadStoppers(); balls = false;
+//            GreenFN.shooterTarget = threeAtOnce?GreenFN.shooterCloseRPM+200:GreenFN.shooterCloseRPM;
+//            GreenFN.minTimeBtwnShots = threeAtOnce?0:0.25;
+//        }
+//        if(gp2.a() || gp2.right_stick_button) {
+//            g.loadStoppers();
+//            GreenFN.shooterTarget = threeAtOnce?GreenFN.shooterFarRPM+250:GreenFN.shooterFarRPM;
+//            GreenFN.minTimeBtwnShots = threeAtOnce?0:0.65;
+//        }
+
 //        if(gp1.left_trigger==0) {
 //            GreenFN.intakeTarget = 0;
 //        }
@@ -256,10 +292,12 @@ public class WetBall extends OpMode {
 
         if(gamepad1.left_trigger>0.05F || gamepad2.left_trigger>0.05F || gamepad2.right_bumper) {
             GreenFN.intakeTarget=GreenFN.intakeRPM;
+            checkSlots = true;
 //            g.toUpdateSlots = true;
         }
         else {
             GreenFN.intakeTarget = 0;
+            checkSlots = false;
 //            g.toUpdateSlots = false;
         }
         if(g.toUpdateSlots) {
@@ -293,6 +331,8 @@ public class WetBall extends OpMode {
 
         if(gamepad2.right_trigger>0.05F || gamepad1.dpad_up) {
             GreenFN.intakeTarget = -GreenFN.intakeRPM;
+            g.intakeStoppers();
+            checkSlots = false;
             balls = false;
         }
 
@@ -431,13 +471,13 @@ public class WetBall extends OpMode {
 
         autoDriving = g.follower.isBusy() || autoDriving;
 
-        if(g.getPose().distanceFrom(launchPose)<autoRPMtol && !inZone) {
-            g.loadStoppers();
-            inZone = true;
-        }
-        if(g.getPose().distanceFrom(launchPose)>autoRPMtol) {
-            inZone = false;
-        }
+//        if(g.getPose().distanceFrom(launchPose)<autoRPMtol && !inZone) {
+//            g.loadStoppers();
+//            inZone = true;
+//        }
+//        if(g.getPose().distanceFrom(launchPose)>autoRPMtol) {
+//            inZone = false;
+//        }
 
 
         if(gp2.dpad_right()) {
@@ -527,7 +567,7 @@ public class WetBall extends OpMode {
 //
 //                }
 //                else{
-                    lastHeading = Math.atan2(gpy-g.getPose().getY(), gpx-g.getPose().getX())+Math.toRadians(90)+Math.toRadians(headingOffset);
+                    lastHeading = Math.atan2(gpy-g.getPose().getY(), gpx-g.getPose().getX())+Math.toRadians(-90)+Math.toRadians(headingOffset);
 //                }
 //            }
         }
@@ -614,7 +654,7 @@ public class WetBall extends OpMode {
 
         telemetry.addData("shooter1 velo: ", g.s1v);
         telemetry.addData("shooter2 velo: ", g.s2v);
-        telemetry.addData("motor RPM: ", g.shooter1.getVelocity() / motorCPR * 60);
+//        telemetry.addData("shooter RPM: ", g.shooter1.getVelocity() / motorCPR * 60);
         telemetry.addData("shooter target: ", GreenFN.shooterTarget);
         telemetry.addData("sh1 pow: ", GreenFN.flywheel1Power);
         telemetry.addData("sh2 pow: ", GreenFN.flywheel2Power);
@@ -627,9 +667,9 @@ public class WetBall extends OpMode {
         telemetry.addData("angulra velo: ", g.angvel);
         telemetry.addData("heading lock: ", headingLock);
         telemetry.addData("heading error: ", headingError);
-        telemetry.addData("apriltagx", GreenFN.fromApriltag.getX());
-        telemetry.addData("apriltagy", GreenFN.fromApriltag.getY());
-        telemetry.addData("apriltagheading", GreenFN.fromApriltag.getHeading());
+//        telemetry.addData("apriltagx", GreenFN.fromApriltag.getX());
+//        telemetry.addData("apriltagy", GreenFN.fromApriltag.getY());
+//        telemetry.addData("apriltagheading", GreenFN.fromApriltag.getHeading());
         telemetry.addData("looptime: ", loopTimer.getElapsedTimeSeconds()-lastLoopTime);
         telemetry.addData("side: ", side);
         telemetry.addData("range" , goal==null?null:(goal.ftcPose.range));
@@ -639,9 +679,9 @@ public class WetBall extends OpMode {
 //        telemetry.addData("myNewY: ", myNewY);
         telemetry.addData("shotTime: ", shotTime);
         telemetry.addData("rpm reg: ", GreenFN.getRPMreg( g.getPose().distanceFrom(goalPose)));
-        telemetry.addData("range adjustment: ", goal==null?null: goal.ftcPose.range*Math.cos(Math.toRadians(goal.ftcPose.pitch)));
-        telemetry.addData("adjustedx: ", g.getPoseFromApriltag().getX());
-        telemetry.addData("adjustedy: ", g.getPoseFromApriltag().getY());
+//        telemetry.addData("range adjustment: ", goal==null?null: goal.ftcPose.range*Math.cos(Math.toRadians(goal.ftcPose.pitch)));
+//        telemetry.addData("adjustedx: ", g.getPoseFromApriltag().getX());
+//        telemetry.addData("adjustedy: ", g.getPoseFromApriltag().getY());
         lastLoopTime = loopTimer.getElapsedTimeSeconds();
         telemetry.addData("slot1: ", GreenFN.ballColors[0]);
         telemetry.addData("slot2: ", GreenFN.ballColors[1]);
