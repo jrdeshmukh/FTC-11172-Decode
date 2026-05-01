@@ -55,12 +55,13 @@ public class PIDTele extends OpMode {
         telemetry.addData("intake target: ", g.intakeTarget);
         telemetry.addData("intake power: ", g.intakePower);
 
-        telemetry.addData("shooter1 velo: ", g.shooter1.getVelocity(AngleUnit.DEGREES));
-        telemetry.addData("shooter2 velo: ", g.shooter2.getVelocity(AngleUnit.DEGREES));
+        telemetry.addData("shooter1 velo: ", g.s1v);
+        telemetry.addData("shooter2 velo: ", g.s2v);
         telemetry.addData("shooter target: ", g.shooterTarget);
         telemetry.addData("sh1 pow: ", g.flywheel1Power);
         telemetry.addData("sh2 pow: ", g.flywheel2Power);
         telemetry.addData("recovery time: ", recoveryTime);
+        telemetry.addData("fps: ", g.visionPortal.getFps());
         telemetry.update();
     }
 }

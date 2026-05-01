@@ -40,6 +40,8 @@ import java.util.List;
 
 @Autonomous()
 @Config()
+@Disabled
+
 public class BlueAuto2 extends LinearOpMode {
 
     GreenFN g;

@@ -31,6 +31,7 @@ import java.util.List;
 @Autonomous()
 @Config()
 @Disabled()
+
 public class FarBlueAuto extends LinearOpMode {
 
     GreenFN g;

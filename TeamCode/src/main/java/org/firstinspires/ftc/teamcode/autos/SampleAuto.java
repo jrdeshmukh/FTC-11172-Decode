@@ -25,6 +25,7 @@ import java.util.List;
 
 @Autonomous
 @Disabled
+
 public class SampleAuto extends OpMode {
 
     GreenFN g;

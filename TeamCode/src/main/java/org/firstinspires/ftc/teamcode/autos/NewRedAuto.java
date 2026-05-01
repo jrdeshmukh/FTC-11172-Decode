@@ -22,6 +22,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.config.GreenFN;
@@ -31,6 +32,8 @@ import java.util.List;
 
 @Autonomous()
 @Config()
+@Disabled
+
 public class NewRedAuto extends LinearOpMode {
 
     GreenFN g;
@@ -327,23 +330,23 @@ public class NewRedAuto extends LinearOpMode {
         return new Pose(144-in.getX(), in.getY(), in.getHeading());
     }
 
-    public static Pose startPose = new Pose(144-15.0, 118.0, Math.toRadians(218));
+    public static Pose startPose = new Pose(144-15.0, 118.0, Math.toRadians(218)+Math.toRadians(180));
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
-    public static double launchheading = Math.toRadians(120.9);
+    public static double launchheading = Math.toRadians(120.9)+Math.toRadians(180);
     public static double newLaunchPoseX = launchPoseX-4, newLaunchPoseY = launchPoseY+6;
     public static Pose launchPose = new Pose(144-newLaunchPoseX, newLaunchPoseY, launchheading);
     public static Pose aprilTagPoseOld = new Pose(46.008, 96.996, Math.toRadians(160));
     public static Pose aprilTagPose = aprilTagPoseOld.mirror().setHeading(Math.toRadians(200));
 
-    public static Pose gotoFirstCtrl = new Pose(140.6, 122.9);
-    public static Pose gotoFirstCtrl2 = new Pose(113.9, 84.5);
+    public static Pose gotoFirstCtrl = new Pose(132.6, 122.9);
+    public static Pose gotoFirstCtrl2 = new Pose(115.9, 84.5);
     public static Pose gatePose = new Pose(129, 75);
 
     public static Pose secondCtrl = new Pose(124.7, 90.9);
     public static Pose secondIntakePose = new Pose(120.5, 62.2);
 
     public static Pose thirdCtrl = new Pose(125.1, 75.4);
-    public static Pose thirdIntakePose = new Pose(120.5, 38.5);
+    public static Pose thirdIntakePose = new Pose(122, 35.5);
 
 //    public static Pose parkPose = new Pose(119.9, 73.45);
     public static Pose parkPose = mirrorNoHeading(OldBlueAuto.parkPose).setHeading(launchPose.getHeading());
@@ -462,7 +465,7 @@ public class NewRedAuto extends LinearOpMode {
                         new FollowerUpdate(),
                         new SequentialAction(
                                 g.setShooterRPM((int) GreenFN.shooterAutoRPM-27),
-                                new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.5),
+                                new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.2),
                                 enableSecondary(),
                                 g.loadAction(),
                                 follow(aprilTag),

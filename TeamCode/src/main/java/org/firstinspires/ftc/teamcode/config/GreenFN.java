@@ -51,13 +51,16 @@ import java.util.List;
 @Config
 public class GreenFN {
     public boolean auto = false;
+    public static boolean enableShooter1 = true, enableShooter2 = true, enableShooter3 = true;
     public static double shooterCloseRPM = 800;
-    public static double shooterAutoRPM = 668;
+    public static double shooterAutoRPM = 665;
+    public static double shooterFarAutoRPM = 900;
     private static final Logger log = LoggerFactory.getLogger(GreenFN.class);
     public static double intakeRPM = 1000;
     public static double closeHoodAngle = 80;
+    public static boolean closeAuto = true;
     WebcamName webcam1;
-    private VisionPortal visionPortal;
+    public VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
     static Size cameraResolution = new Size(640, 480);
     ImageRegion previousFrame = ImageRegion.asUnityCenterCoordinates(-1,1,0,0);
@@ -158,8 +161,8 @@ public class GreenFN {
 
     public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.00, intakekI = 0, intakekD = 0.00, shooterkP = 0.002, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.00073, shooterkF = 0.00074;
-    public DcMotorEx shooter1, shooter2, intake, fifthWheel;
+    public static double intakekP = 0.00, intakekI = 0, intakekD = 0.00, shooterkP = 0.005, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.00073, shooterkF = 0.00067;
+    public DcMotorEx shooter1, shooter2, shooter3, intake, fifthWheel;
 //    public NormalizedColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;
     public static double shooterTarget = 0, intakeTarget = 0;
@@ -209,13 +212,15 @@ public class GreenFN {
 
 
     public static double stopperIntake = 0.83, stopperLoad = 0.61, stopperShoot = 0.05;
-    public static double stopper1Shoot = 0.62, stopper2Shoot = 0.663, stopper3Shoot = 0.665;
-    public static double stopper1Load = 0.44, stopper2Load = 0.483; //0.47
-    public static double stopper3Load = 0.485;
+    public static double stopper1Shoot = 0.615, stopper2Shoot = 0.66, stopper3Shoot = 0.71;
+    public static double apriltagNumThreads = 3;
+    public static double stopper1Load = 0.35, stopper2Load = 0.39; //0.47
+    public static double stopper3Load = 0.44;
     public static double stopper1Intake = 0.29, stopper2Intake = 0.34;// 0.655,
     public static double stopper3Intake = 0.34;
 
     public double hood1down = 0.38, hood2down = 0.74, hood1up = 0.52, hood2up = 0.6;
+    public static double cover1down = 0.59, cover1up = 0.43, cover2down = 0.42, cover2up = 0.58;
 
     public double stop1pos, stop2pos, stop3pos;
 
@@ -223,6 +228,8 @@ public class GreenFN {
     public int shooterRPMTolerance = 70;
 
     FirstBoolean lodded = new FirstBoolean();
+    public Servo cover1;
+    public Servo cover2;
 
 
     public enum Motifs {
@@ -363,7 +370,9 @@ public class GreenFN {
         }
         shooter1 = map.get(DcMotorEx.class, "shooter1");
         shooter2 = map.get(DcMotorEx.class, "shooter2");
+        shooter3 = map.get(DcMotorEx.class, "shooter3");
         shooter1.setDirection(DcMotorSimple.Direction.REVERSE);
+        shooter3.setDirection(DcMotorSimple.Direction.REVERSE);
         intake = map.get(DcMotorEx.class, "intake");
         shooterController1 = new PIDController(shooterkP, shooterkI, shooterkD);
         shooterController2 = new PIDController(shooterkP, shooterkI, shooterkD);
@@ -371,18 +380,20 @@ public class GreenFN {
         stopper1 = map.servo.get("stopper1");
         stopper2 = map.servo.get("stopper2");
         stopper3 = map.servo.get("stopper3");
-        hood1 = map.servo.get("hood1");
-        hood2 = map.servo.get("hood2");
+//        hood1 = map.servo.get("hood1");
+//        hood2 = map.servo.get("hood2");
+        cover1 = map.servo.get("cover1");
+        cover2 = map.servo.get("cover2");
 
-        fifthWheel = map.get(DcMotorEx.class, "fifthWheel");
+//        fifthWheel = map.get(DcMotorEx.class, "fifthWheel");
 
 
         shotTimer = new Timer();
         recentShotTime = shotTimer.getElapsedTimeSeconds();
 
-        colorSensor1 = map.get(RevColorSensorV3.class, "colorSensor1");
-        colorSensor2 = map.get(RevColorSensorV3.class, "colorSensor2");
-        colorSensor3 = map.get(RevColorSensorV3.class, "colorSensor3");
+//        colorSensor1 = map.get(RevColorSensorV3.class, "colorSensor1");
+//        colorSensor2 = map.get(RevColorSensorV3.class, "colorSensor2");
+//        colorSensor3 = map.get(RevColorSensorV3.class, "colorSensor3");
 //        lights = map.get(RevBlinkinLedDriver.class, "lights");
 //        lights.setPattern(RevBlinkinLedDriver.BlinkinPattern.RAINBOW_RAINBOW_PALETTE);
         // Create the AprilTag processor the easy way.
@@ -409,12 +420,8 @@ public class GreenFN {
         visionPortal = new VisionPortal.Builder()
             .setCamera(webcam1)
             .setCameraResolution(cameraResolution)
-            .addProcessors(aprilTag, colorLocator, colorLocator2)
+            .addProcessors(aprilTag)
             .build();
-        visionPortal.resumeStreaming();
-        visionPortal.resumeLiveView();
-
-
     }
 
     /**
@@ -460,6 +467,7 @@ public class GreenFN {
         List<Servo> toRemove = new ArrayList<>();
         for (Servo s : shooterQueue) {
             if(minTimeBtwnShots==0) {
+                toRemove.add(s);
                 if (s.equals(stopper1)) {
                     recentServoShot = 1;
                     stopper1.setPosition(stopper1Shoot);
@@ -508,13 +516,24 @@ public class GreenFN {
 
         }
         if(shooterTarget !=0 && !inAuto) {
-            shooterTarget = regressionOffset+(threeAtOnce?getRPMreg3(currentDistance):getRPMreg(currentDistance));
-            if(shooterTarget < 700) shooterTarget = 600;
-            if(currentDistance > 70) {
-                minTimeBtwnShots = 0.003*currentDistance+0.145;
+            shooterTarget = (threeAtOnce?getRPMreg3(currentDistance+regressionOffset):getRPMreg(currentDistance+regressionOffset));
+            if(currentDistance < 50) {
+                shooterTarget = 665;
+            }
+            if(currentDistance > 125) {
+                minTimeBtwnShots = 0.55;
+            }
+            else if (currentDistance > 115) {
+                minTimeBtwnShots = 0.5;
+            }
+            else if (currentDistance > 100) {
+                minTimeBtwnShots = 0.45;
+            }
+            else if (currentDistance > 65){
+                minTimeBtwnShots = 0.25;
             }
             else {
-                minTimeBtwnShots = 0.25;
+                minTimeBtwnShots = 0.21;
             }
             if(threeAtOnce) minTimeBtwnShots = 0;
 //            minTimeBtwnShots = 0.001*modifiedShooterRPM-0.45;
@@ -577,9 +596,6 @@ public class GreenFN {
     }
 
     public void intakeStoppers() {
-        stopper1.setPosition(stopper1Intake-0.2);
-        stopper2.setPosition(stopper2Intake-0.2);
-        stopper3.setPosition(stopper3Intake-0.2);
         stopper1.setPosition(stopper1Intake);
         stopper2.setPosition(stopper2Intake);
         stopper3.setPosition(stopper3Intake);
@@ -587,9 +603,7 @@ public class GreenFN {
     }
 
     public void loadStoppers() {
-        stopper1.setPosition(stopper1Load+0.2);
-        stopper2.setPosition(stopper2Load+0.2);
-        stopper3.setPosition(stopper3Load+0.2);
+
         stopper1.setPosition(stopper1Load);
         stopper2.setPosition(stopper2Load);
         stopper3.setPosition(stopper3Load);
@@ -665,11 +679,13 @@ public class GreenFN {
         if(shooterTarget==0) {
             shooter1.setPower(0);
             shooter2.setPower(0);
+            shooter3.setPower(0);
             return;
         }
 
-        shooter1.setPower(flywheel1Power);
-        shooter2.setPower(flywheel1Power);
+        if(enableShooter1) shooter1.setPower(flywheel1Power);
+        if(enableShooter2) shooter2.setPower(flywheel1Power);
+        if(enableShooter3) shooter3.setPower(flywheel1Power);
 
 
 
@@ -802,6 +818,9 @@ public class GreenFN {
     public Action loadAction() {
         return new InstantAction(this::load);
     }
+    public Action intakeAction() {
+        return new InstantAction(this::intakeStoppers);
+    }
 
     /**
      * Converts an AprilTag detection into the robot’s absolute field position.
@@ -844,9 +863,9 @@ public class GreenFN {
     public static double getRPMreg(double range) {
 //        return 0.0692362*range*range-3.38259*range+718.12462;
         if (range < 100) {
-            return 0.011249*range*range+0.606386*range+653.33594;
+            return 0.0456588*range*range-3.19322*range+716.09567;
         }
-        return 995;
+        return 0.0364286*range*range-5.94643*range+1082.82143;
     }
 
     public static double getRPMreg3(double range) {

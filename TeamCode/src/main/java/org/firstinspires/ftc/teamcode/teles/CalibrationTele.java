@@ -21,13 +21,14 @@ public class CalibrationTele extends OpMode {
     public static double rpmIncrement = 50;
     public double hood1Pos, hood2Pos;
     public static double hood1target = 0.5, hood2target = 0.5;
+    public static double cover1pos = 0.5, cover2pos = 0.5;
     @Override
     public void init() {
         g = new GreenFN(hardwareMap);
         g.follower.startTeleopDrive();
         gp1 = new BBG(gamepad1);
         gp2 = new BBG(gamepad2);
-        g.toUpdateColorSensor = true;
+        g.toUpdateColorSensor = false;
 
 
         stopperPos = g.stopper1.getPosition();
@@ -47,7 +48,7 @@ public class CalibrationTele extends OpMode {
             g.stopper3.setPosition(GreenFN.stopper3Load);
         }
 
-        g.updateSlotDetection();
+//        g.updateSlotDetection();
         if(gp1.a()) {
             gamepad1.rumble(1000);
         }
@@ -73,15 +74,18 @@ public class CalibrationTele extends OpMode {
 //            g.hood2.setPosition(hood2Pos + increment);
 //        }
 //
-        hood1Pos = g.hood1.getPosition();
-        hood2Pos = g.hood2.getPosition();
+//        hood1Pos = g.hood1.getPosition();
+//        hood2Pos = g.hood2.getPosition();
 
-        g.hood1.setPosition(hood1target);
-        g.hood2.setPosition(hood2target);
+//        g.hood1.setPosition(hood1target);
+//        g.hood2.setPosition(hood2target);
 
         g.intake.setPower(gamepad2.left_stick_y);
         g.shooter1.setPower(gamepad2.right_stick_y);
         g.shooter2.setPower(gamepad2.right_stick_y);
+
+        g.cover1.setPosition(cover1pos);
+        g.cover2.setPosition(cover2pos);
 
 
 
@@ -110,6 +114,7 @@ public class CalibrationTele extends OpMode {
         telemetry.addData("slot3: ", GreenFN.ballColors[2]);
         telemetry.addData("hood1: ", hood1Pos);
         telemetry.addData("hood2: ", hood2Pos);
+        telemetry.addData("fps: ", g.visionPortal.getFps());
         telemetry.update();
     }
 }
