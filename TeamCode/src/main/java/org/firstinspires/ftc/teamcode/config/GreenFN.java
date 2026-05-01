@@ -179,6 +179,7 @@ public class GreenFN {
     public boolean toUpdateColorSensor = false, toUpdateSlots = false;
     public int recentServoShot = 0;
 
+    //s1v = shooter 1 velocity
     public double s1v = 0, s2v = 0, iv = 0;
 
     public double adjustedX = 0, adjustedY = 0;
