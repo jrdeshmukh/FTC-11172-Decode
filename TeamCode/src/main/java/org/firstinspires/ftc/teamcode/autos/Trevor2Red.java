@@ -362,7 +362,7 @@ public class Trevor2Red extends LinearOpMode {
     public static Pose gatePose = new Pose(14.2+xOffset, 78.5).mirror();
 
     public static Pose gate2 = new Pose(14.6+xOffset, 76.6).mirror();
-    public static Pose gatePose2 = new Pose(27.7+xOffset, 78.5+xOffset).mirror();
+    public static Pose gatePose2 = new Pose(27.7+xOffset, 78.5).mirror();
 
     public static Pose secondCtrl = new Pose(27.31+xOffset, 86.44).mirror();
     public static Pose secondIntakePose = new Pose(23.5+xOffset, 63.72-3).mirror();

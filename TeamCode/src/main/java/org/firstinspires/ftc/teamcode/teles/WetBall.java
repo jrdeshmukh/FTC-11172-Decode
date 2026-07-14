@@ -394,8 +394,8 @@ public class WetBall extends OpMode {
 //            g.stopper3.setPosition(GreenFN.stopperShoot);
 //        }
 
-        if(gp2.dpad_down()) g.regressionOffset -= 2;
-        if(gp2.dpad_up()) g.regressionOffset += 2;
+        if(gp2.dpad_down()) g.regressionOffset -= 1.5;
+        if(gp2.dpad_up()) g.regressionOffset += 1.5;
 
 
         if(gp1.a()) {

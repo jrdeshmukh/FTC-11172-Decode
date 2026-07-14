@@ -54,7 +54,7 @@ public class GreenFN {
     public static boolean enableShooter1 = true, enableShooter2 = true, enableShooter3 = true;
     public static double shooterCloseRPM = 800;
     public static double shooterAutoRPM = 665;
-    public static double shooterFarAutoRPM = 900;
+    public static double shooterFarAutoRPM = 897;
     private static final Logger log = LoggerFactory.getLogger(GreenFN.class);
     public static double intakeRPM = 1000;
     public static double closeHoodAngle = 80;
@@ -161,7 +161,7 @@ public class GreenFN {
 
     public RevColorSensorV3 colorSensor1, colorSensor2, colorSensor3;
     PIDController shooterController1, shooterController2, intakeController;
-    public static double intakekP = 0.00, intakekI = 0, intakekD = 0.00, shooterkP = 0.005, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.00073, shooterkF = 0.00067;
+    public static double intakekP = 0.00, intakekI = 0, intakekD = 0.00, shooterkP = 0.0035, shooterkI = 0, shooterkD = 0.000, intakeKF = 0.00073, shooterkF = 0.00067;
     public DcMotorEx shooter1, shooter2, shooter3, intake, fifthWheel;
 //    public NormalizedColorSensor colorSensor1, colorSensor2, colorSensor3;
     RevBlinkinLedDriver lights;

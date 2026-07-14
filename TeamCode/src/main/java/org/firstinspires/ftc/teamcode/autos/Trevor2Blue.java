@@ -343,7 +343,7 @@ public class Trevor2Blue extends LinearOpMode {
     public static Pose secondIntakePose = new Pose(23.5+xOffset, 63.72-3);
 
     public static Pose gate2 = new Pose(14.6+xOffset, 76.6);
-    public static Pose gatePose2 = new Pose(27.7+xOffset, 78.5+xOffset);
+    public static Pose gatePose2 = new Pose(27.7+xOffset, 78.5);
 
     public static Pose thirdCtrl = new Pose(23.55+xOffset, 61.3);
     public static Pose thirdIntakePose = new Pose(25.5+xOffset, 39.85-3);
@@ -488,7 +488,7 @@ public class Trevor2Blue extends LinearOpMode {
                 new Path(
                         new BezierLine(launchPose, parkPose)
                 );
-        park.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(184), 0.7);
+        park.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(181), 0.7);
 
 
         GreenFN.detect = true;
@@ -586,6 +586,7 @@ public class Trevor2Blue extends LinearOpMode {
                                 new SleepAction(0.8*3),
                                 g.setIntakeRPM(0),
                                 g.setShooterRPM(0),
+                                enableSecondary(),
                                 followUntilDone(park)
                         )
                 )

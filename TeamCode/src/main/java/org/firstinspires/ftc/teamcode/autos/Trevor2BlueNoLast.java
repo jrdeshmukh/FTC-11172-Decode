@@ -326,7 +326,7 @@ public class Trevor2BlueNoLast extends LinearOpMode {
     public static double launchPoseX = 49, launchPoseY = 92,launchPoseHeading = Math.toRadians(46);;
     public static double newLaunchPoseX = launchPoseX, newLaunchPoseY = launchPoseY;
 
-    public static double xOffset = 5;
+    public static double xOffset = 4.5;
 
     //    public static double launchPoseX = 33.92, launchPoseY = 96.11, launchPoseHeading = Math.toRadians(209.484);
     public static Pose launchPose = new Pose(newLaunchPoseX+xOffset, newLaunchPoseY, launchPoseHeading);
@@ -337,16 +337,16 @@ public class Trevor2BlueNoLast extends LinearOpMode {
     public static Pose gotoFirstApriltag = new Pose(24.3+xOffset, 101.09);
     public static Pose gotoFirstCtrl = new Pose(18.71+xOffset, 89.9);
     public static Pose gotoFirstCtrl2 = new Pose(29.37+xOffset, 79.39);
-    public static Pose gatePose = new Pose(14.2+xOffset, 78.5);
+    public static Pose gatePose = new Pose(13.8+xOffset, 76.5);
 
     public static Pose secondCtrl = new Pose(27.31+xOffset, 86.44);
     public static Pose secondIntakePose = new Pose(23.5+xOffset, 63.72-3);
 
-    public static Pose finalgatectrl = new Pose(27.5+xOffset, 75).mirror();
+    public static Pose finalgatectrl = new Pose(27.5+xOffset, 75);
 
 
     public static Pose gate2 = new Pose(14.2+xOffset, 78.5);
-    public static Pose gatePose2 = new Pose(27.7+xOffset, 78.5+xOffset);
+    public static Pose gatePose2 = new Pose(27.7+xOffset, 78.5);
 
     public static Pose thirdCtrl = new Pose(23.55+xOffset, 61.3);
     public static Pose thirdIntakePose = new Pose(25.5+xOffset, 39.85-3);
@@ -500,7 +500,7 @@ public class Trevor2BlueNoLast extends LinearOpMode {
                 new Path(
                         new BezierLine(launchPose, parkPose)
                 );
-        park.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(184), 0.7);
+        park.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(181), 0.7);
 
 
         GreenFN.detect = true;
@@ -523,13 +523,13 @@ public class Trevor2BlueNoLast extends LinearOpMode {
                                 new InstantAction(() -> GreenFN.detect=true),
                                 new InstantAction(() -> g.cover1.setPosition(GreenFN.cover1up)),
                                 new InstantAction(() -> g.cover2.setPosition(GreenFN.cover2up)),
-                                g.setShooterRPM((int) GreenFN.shooterAutoRPM+34),
+                                g.setShooterRPM((int) GreenFN.shooterAutoRPM+29),
                                 new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.25),
                                 enableSecondary(),
                                 g.loadAction(),
                                 followUntilDone(scorePreload),
                                 shootInOrder( 0),
-                                new SleepAction(0.25*3),
+                                new SleepAction(0.25*3+0.1),
                                 disableSecondary(),
                                 followUntilDone(aprilTag),
                                 new SleepAction(1.2),
@@ -583,6 +583,7 @@ public class Trevor2BlueNoLast extends LinearOpMode {
                                 g.setShooterRPM(0),
                                 followUntilDone(finalGate),
                                 new SleepAction(2),
+                                enableSecondary(),
                                 followUntilDone(park)
                         )
                 )

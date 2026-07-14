@@ -392,11 +392,14 @@ public class LawrenceBlue extends LinearOpMode {
 
     public static Pose scoreFirstCtrl = new Pose(19, 19);
 
-    public static Pose secondCtrl = new Pose(22.23+xOffset, 14.03);
+    public static Pose secondCtrl = new Pose(18.88+xOffset, 8.3);
     public static Pose secondIntakePose = new Pose(23.67+xOffset, 30.19);
 
-    public static Pose intakeRandomCtrl = new Pose(9+xOffset, -6);
-    public static Pose intakeRandomEnd = new Pose(14.88+xOffset, 37.23);
+    public static Pose intakeRandomCtrl = new Pose(9+xOffset, -5);
+    public static Pose intakeRandomEnd = new Pose(15+xOffset, 23.3);
+
+    public static Pose intakeRandom1 = new Pose(9+xOffset, 18.81);
+    public static Pose intakeRandom2 = new Pose(9.2+xOffset, 13.5);
 
     public static Pose parkPose = new Pose(24+xOffset, 24);
 
@@ -479,6 +482,39 @@ public class LawrenceBlue extends LinearOpMode {
                         )
                 );
         randomIntake.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(-120), 0.5);
+
+        Path randomIntake12 = new Path(
+                new BezierLine(
+                        launchPose,
+                        intakeRandom1
+                )
+        );
+        randomIntake12.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(-90), 0.5);
+
+        Path returnFromrandomintake12 = new Path(
+                new BezierLine(
+                        intakeRandom1,
+                        launchPose
+                )
+        );
+        returnFromrandomintake12.setLinearHeadingInterpolation(Math.toRadians(-90), launchPose.getHeading());
+
+        Path randomIntake3 = new Path(
+                new BezierLine(
+                        launchPose,
+                        intakeRandom2
+                )
+        );
+        randomIntake3.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(-90));
+        Path returnFromrandomintake3 = new Path(
+                new BezierLine(
+                        intakeRandom2,
+                        launchPose
+                )
+        );
+        returnFromrandomintake3.setLinearHeadingInterpolation(Math.toRadians(-90), launchPose.getHeading());
+
+
 
         Path scoreRandom =
                 new Path(

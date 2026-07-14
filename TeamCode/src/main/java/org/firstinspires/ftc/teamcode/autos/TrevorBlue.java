@@ -479,7 +479,7 @@ public class TrevorBlue extends LinearOpMode {
                 new Path(
                         new BezierLine(launchPose, parkPose)
                 );
-        park.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(184), 0.7);
+        park.setLinearHeadingInterpolation(launchPose.getHeading(), Math.toRadians(181), 0.7);
 
 
         GreenFN.detect = true;
@@ -502,7 +502,7 @@ public class TrevorBlue extends LinearOpMode {
                                 new InstantAction(() -> GreenFN.detect=true),
                                 new InstantAction(() -> g.cover1.setPosition(GreenFN.cover1up)),
                                 new InstantAction(() -> g.cover2.setPosition(GreenFN.cover2up)),
-                                g.setShooterRPM((int) GreenFN.shooterAutoRPM+32),
+                                g.setShooterRPM((int) GreenFN.shooterAutoRPM+40),
                                 new InstantAction(() -> GreenFN.minTimeBtwnShots = 0.25),
                                 enableSecondary(),
                                 g.loadAction(),
@@ -515,14 +515,14 @@ public class TrevorBlue extends LinearOpMode {
                                 g.intakeAction(),
                                 g.setShooterRPM((int) GreenFN.shooterAutoRPM),
 
-                                new InstantAction(() -> GreenFN.minTimeBtwnShots = 1.1),
+                                new InstantAction(() -> GreenFN.minTimeBtwnShots = 1),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+550),
                                 follow(gotoFirst),
                                 new SleepAction(0.5),
                                 coverDown(),
                                 new WaitToDone(),
                                 new InstantAction(() -> GreenFN.detect=false),
-                                new SleepAction(2.7),
+                                new SleepAction(3.5),
                                 enableSecondary(),
 
                                 follow(scoreFirst),
@@ -533,7 +533,7 @@ public class TrevorBlue extends LinearOpMode {
                                 new WaitToDone(),
 
                                 shootInOrder(1),
-                                new SleepAction(1.1*3),
+                                new SleepAction(1*3),
                                 disableSecondary(),
                                 g.loadAction(),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+550),
@@ -552,7 +552,7 @@ public class TrevorBlue extends LinearOpMode {
                                 new WaitToDone(),
 
                                 shootInOrder(2),
-                                new SleepAction(1.1*3),
+                                new SleepAction(1*3),
                                 disableSecondary(),
                                 g.setIntakeRPM((int) GreenFN.intakeRPM+550),
                                 g.intakeAction(),
@@ -571,9 +571,10 @@ public class TrevorBlue extends LinearOpMode {
                                 new WaitToDone(),
                                 new SleepAction(0.3),
                                 shootInOrder(3),
-                                new SleepAction(1.1*3),
+                                new SleepAction(1*3),
                                 g.setIntakeRPM(0),
                                 g.setShooterRPM(0),
+                                enableSecondary(),
                                 followUntilDone(park)
                         )
                 )
